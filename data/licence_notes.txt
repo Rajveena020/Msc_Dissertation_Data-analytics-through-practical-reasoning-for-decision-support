@@ -1,0 +1,134 @@
+=== DATASET LICENCE NOTES ===
+Last updated: 1 June 2026
+Purpose: ODRL policy encoding reference for dissertation
+
+================================================
+DATASET 1: Air Quality (London Bloomsbury)
+================================================
+Source: DEFRA UK-AIR / data.gov.uk
+URL: https://uk-air.defra.gov.uk/data/
+Licence: Open Government Licence v3.0
+Licence URL: https://nationalarchives.gov.uk/doc/open-government-licence/version/3/
+
+PERMISSIONS:
+- Copy, publish, distribute and transmit the data
+- Adapt the data
+- Exploit the data commercially or non-commercially
+- Combine with other datasets
+
+OBLIGATIONS (must do):
+- Acknowledge the source: "Contains public sector information 
+  licensed under the Open Government Licence v3.0"
+
+PROHIBITIONS:
+- None significant
+
+ODRL KEY: ogl_v3
+
+================================================
+DATASET 2: ONS Census 2021
+================================================
+Source: Office for National Statistics
+URL: https://www.ons.gov.uk/census
+Licence: Open Government Licence v3.0
+Licence URL: https://nationalarchives.gov.uk/doc/open-government-licence/version/3/
+
+PERMISSIONS:
+- Copy, publish, distribute and transmit the data
+- Adapt the data
+- Exploit commercially or non-commercially
+- Combine with other datasets
+
+OBLIGATIONS:
+- Acknowledge the source: "Source: Office for National 
+  Statistics licensed under the Open Government Licence v3.0"
+
+PROHIBITIONS:
+- None significant
+
+ODRL KEY: ogl_v3
+
+================================================
+DATASET 3: Police Crime Data
+================================================
+Source: data.police.uk
+URL: https://data.police.uk/about/
+Licence: Open Government Licence v3.0
+Licence URL: https://nationalarchives.gov.uk/doc/open-government-licence/version/3/
+
+PERMISSIONS:
+- Copy, publish, distribute and transmit the data
+- Adapt and combine with other datasets
+- Commercial and non-commercial use
+
+OBLIGATIONS:
+- Acknowledge the source
+
+PROHIBITIONS:
+- None significant
+
+ODRL KEY: ogl_v3
+
+================================================
+DATASET 4: DfT Road Traffic Statistics
+================================================
+Source: Department for Transport
+URL: https://roadtraffic.dft.gov.uk
+Licence: Open Government Licence v3.0
+Licence URL: https://nationalarchives.gov.uk/doc/open-government-licence/version/3/
+
+PERMISSIONS:
+- Copy, publish, distribute and transmit the data
+- Adapt and combine freely
+- Commercial use permitted
+
+OBLIGATIONS:
+- Acknowledge the source: "Contains public sector information 
+  licensed under the Open Government Licence v3.0"
+
+PROHIBITIONS:
+- None significant
+
+ODRL KEY: ogl_v3
+
+================================================
+DATASET 5: OpenStreetMap (Berkshire)
+================================================
+Source: OpenStreetMap Foundation
+URL: https://www.openstreetmap.org/copyright
+Licence: Open Data Commons Open Database Licence (ODbL) v1.0
+Licence URL: https://opendatacommons.org/licenses/odbl/1-0/
+
+PERMISSIONS:
+- Copy, distribute and use the database
+- Produce works from the database
+- Modify, transform and build upon the database
+
+OBLIGATIONS (CRITICAL - causes conflict with OGL):
+- Any derived database must be published under ODbL
+- Must keep the database open
+- Must attribute OpenStreetMap contributors
+
+PROHIBITIONS:
+- Cannot make a derived database closed/proprietary
+- Cannot combine with a licence that restricts redistribution
+
+ODRL KEY: odbl_v1
+
+================================================
+POLICY CONFLICT SUMMARY
+================================================
+Scenario 1: air_quality (OGL) + police_crime (OGL)
+  Result: COMPLIANT - both OGL, no conflict
+
+Scenario 2: air_quality (OGL) + osm_data (ODbL)  
+  Result: VIOLATION - ODbL requires derived DB to stay open,
+  conflicts with OGL pipeline that produces closed output
+
+Scenario 3: dft_traffic (OGL) + osm_data (ODbL)
+  Result: VIOLATION - same ODbL conflict
+
+NOTE: NHS admissions dataset not downloaded as it requires
+registration. Licence is CC-BY-NC. This will be simulated
+in ODRL policy files for testing purposes.
+================================================
