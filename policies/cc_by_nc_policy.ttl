@@ -1,0 +1,31 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/policy/> .
+
+ex:CC_BY_NC_Policy a odrl:Policy ;
+    dc:title "Creative Commons Attribution-NonCommercial 4.0" ;
+    dc:description "CC-BY-NC - permits non-commercial use with attribution only" ;
+    odrl:permission [
+        a odrl:Permission ;
+        odrl:action odrl:reproduce ;
+        odrl:action odrl:distribute ;
+        odrl:action odrl:modify ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:purpose ;
+            odrl:operator odrl:isA ;
+            odrl:rightOperand odrl:nonCommercialUse ;
+            dc:description "Non-commercial use only"
+        ] ;
+        odrl:duty [
+            a odrl:Duty ;
+            odrl:action odrl:attribute ;
+            dc:description "Must attribute the original creator"
+        ]
+    ] ;
+    odrl:prohibition [
+        a odrl:Prohibition ;
+        odrl:action odrl:commercialize ;
+        dc:description "Commercial use is strictly prohibited"
+    ] .

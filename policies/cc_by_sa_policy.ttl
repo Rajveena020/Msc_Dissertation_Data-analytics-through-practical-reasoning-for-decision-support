@@ -1,0 +1,38 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/policy/> .
+
+ex:CC_BY_SA_Policy a odrl:Policy ;
+    dc:title "Creative Commons Attribution-ShareAlike 4.0" ;
+    dc:description "CC-BY-SA - permits use with attribution and share-alike requirement" ;
+    odrl:permission [
+        a odrl:Permission ;
+        odrl:action odrl:reproduce ;
+        odrl:action odrl:distribute ;
+        odrl:action odrl:modify ;
+        odrl:action odrl:commercialize ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:relicensing ;
+            odrl:operator odrl:isA ;
+            odrl:rightOperand odrl:shareAlike ;
+            dc:description "Derived works must use the same CC-BY-SA licence"
+        ] ;
+        odrl:duty [
+            a odrl:Duty ;
+            odrl:action odrl:attribute ;
+            dc:description "Must attribute the original creator"
+        ]
+    ] ;
+    odrl:prohibition [
+        a odrl:Prohibition ;
+        odrl:action odrl:distribute ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:relicensing ;
+            odrl:operator odrl:isNotA ;
+            odrl:rightOperand odrl:shareAlike ;
+            dc:description "Cannot distribute derived works under a different licence"
+        ]
+    ] .

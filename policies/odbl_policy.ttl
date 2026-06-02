@@ -1,0 +1,49 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/policy/> .
+
+ex:ODbL_Policy a odrl:Policy ;
+    dc:title "Open Data Commons Open Database Licence v1.0" ;
+    dc:description "ODbL - permits use of database with share-alike and open access requirements" ;
+    odrl:permission [
+        a odrl:Permission ;
+        odrl:action odrl:reproduce ;
+        odrl:action odrl:distribute ;
+        odrl:action odrl:modify ;
+        odrl:action odrl:commercialize ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:relicensing ;
+            odrl:operator odrl:isA ;
+            odrl:rightOperand odrl:shareAlike ;
+            dc:description "Any derived database must be published under ODbL"
+        ] ;
+        odrl:duty [
+            a odrl:Duty ;
+            odrl:action odrl:attribute ;
+            dc:description "Must attribute OpenStreetMap contributors"
+        ]
+    ] ;
+    odrl:prohibition [
+        a odrl:Prohibition ;
+        odrl:action odrl:distribute ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:relicensing ;
+            odrl:operator odrl:isNotA ;
+            odrl:rightOperand odrl:shareAlike ;
+            dc:description "Cannot distribute derived database under a closed or restrictive licence"
+        ]
+    ] ;
+    odrl:prohibition [
+        a odrl:Prohibition ;
+        odrl:action odrl:distribute ;
+        odrl:constraint [
+            a odrl:Constraint ;
+            odrl:leftOperand odrl:accessibility ;
+            odrl:operator odrl:isA ;
+            odrl:rightOperand odrl:closed ;
+            dc:description "Derived database must remain publicly accessible"
+        ]
+    ] .

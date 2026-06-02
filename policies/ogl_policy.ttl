@@ -1,0 +1,20 @@
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/policy/> .
+
+ex:OGL_Policy a odrl:Policy ;
+    dc:title "Open Government Licence v3.0" ;
+    dc:description "UK Open Government Licence - permits free use with attribution" ;
+    odrl:permission [
+        a odrl:Permission ;
+        odrl:action odrl:reproduce ;
+        odrl:action odrl:distribute ;
+        odrl:action odrl:modify ;
+        odrl:action odrl:commercialize ;
+        odrl:duty [
+            a odrl:Duty ;
+            odrl:action odrl:attribute ;
+            dc:description "Must acknowledge source as OGL v3.0"
+        ]
+    ] .
