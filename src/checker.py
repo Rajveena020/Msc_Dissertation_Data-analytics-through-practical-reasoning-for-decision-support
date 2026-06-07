@@ -36,6 +36,9 @@ class PolicyChecker:
                     elif "odbl_restriction" in atoms:
                         violation_type = "odbl_restriction"
                         explanation = f"ODbL requires derived database to remain open"
+                    elif "nc_sa_conflict" in atoms:
+                        violation_type = "nc_sa_conflict"
+                        explanation = f"CC-BY-NC and CC-BY-SA are mutually incompatible"
                 else:
                     explanation = f"Combining {dataset1} with {dataset2} is compliant"
         return {"compliant": compliant, "violation_type": violation_type, "explanation": explanation, "datasets": [dataset1, dataset2]}
