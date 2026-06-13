@@ -1,7 +1,14 @@
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix dc: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ex: <http://example.org/policy/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> 
+@prefix dc: <http://purl.org/dc/terms/> 
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+@prefix ex: <http://example.org/policy/> 
+
+# ================================================================================================
+# Cross-reference: rdflicense CC-BY-SA encoding at: # http://purl.org/NET/rdflicense/cc-by-sa4.0
+# Difference: rdflicense uses cc:ShareAlike as a duty action
+# This encoding uses odrl:relicensing constraint (ODRL 2.2)
+# Both capture the share-alike requirement equivalently
+# ================================================================================================
 
 ex:CC_BY_SA_Policy a odrl:Policy ;
     dc:title "Creative Commons Attribution-ShareAlike 4.0" ;

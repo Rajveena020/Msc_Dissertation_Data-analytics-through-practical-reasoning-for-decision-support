@@ -1,7 +1,14 @@
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix dc: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ex: <http://example.org/policy/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> 
+@prefix dc: <http://purl.org/dc/terms/> 
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+@prefix ex: <http://example.org/policy/> 
+
+# ==============================================================================================
+# Cross-reference: rdflicense CC-BY-NC encoding at:http://purl.org/NET/rdflicense/cc-by-nc4.0
+# Difference: rdflicense uses cc:CommercialUse vocabulary
+# This encoding uses odrl:commercialize (ODRL 2.2 standard)
+# Both are semantically equivalent for compliance checking
+# ==============================================================================================
 
 ex:CC_BY_NC_Policy a odrl:Policy ;
     dc:title "Creative Commons Attribution-NonCommercial 4.0" ;
@@ -28,4 +35,4 @@ ex:CC_BY_NC_Policy a odrl:Policy ;
         a odrl:Prohibition ;
         odrl:action odrl:commercialize ;
         dc:description "Commercial use is strictly prohibited"
-    ] .
+    ] 

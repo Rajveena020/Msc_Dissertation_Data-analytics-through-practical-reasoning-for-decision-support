@@ -1,7 +1,13 @@
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix dc: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ex: <http://example.org/policy/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> 
+@prefix dc: <http://purl.org/dc/terms/> 
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
+@prefix ex: <http://example.org/policy/> 
+
+# =======================================================================================
+# Cross-reference: rdflicense ODbL encoding at:http://purl.org/NET/rdflicense/ODbL1.0
+# rdflicense dataset confirmed to include Open Data Commons licences including ODbL
+# This encoding aligns with rdflicense structure but uses ODRL 2.2 vocabulary throughout
+# =======================================================================================
 
 ex:ODbL_Policy a odrl:Policy ;
     dc:title "Open Data Commons Open Database Licence v1.0" ;
