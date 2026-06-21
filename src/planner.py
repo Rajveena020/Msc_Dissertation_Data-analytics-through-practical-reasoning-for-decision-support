@@ -1,8 +1,6 @@
 # ============================================================
 # planner.py
 # Pipeline Planner - YAWL-grounded workflow construction
-# Data Analytics through Practical Reasoning
-# Rajveena Sahu | MSc Dissertation | University of Bath
 # ============================================================
 
 import sys
@@ -13,17 +11,17 @@ from src.checker import PolicyChecker
 
 # Dataset Registry 
 DATASET_REGISTRY = {
-    "air_quality":        {"licence": "ogl",     "description": "DEFRA air quality monitoring data"},
-    "ons_census":         {"licence": "ogl",     "description": "ONS Census 2021 population data"},
-    "police_crime":       {"licence": "ogl",     "description": "Police.uk crime statistics"},
-    "dft_traffic":        {"licence": "ogl",     "description": "DfT road traffic statistics"},
-    "osm_berkshire":      {"licence": "odbl",    "description": "OpenStreetMap Berkshire extract"},
-    "nhs_admissions":     {"licence": "cc_by_nc","description": "NHS hospital admissions (simulated)"},
-    "met_office_weather": {"licence": "cc_by_sa","description": "Met Office weather data"},
-    "ons_health_stats":   {"licence": "ogl",     "description": "ONS health statistics (OGL alternative)"},
+    "air_quality":        {"licence": "ogl",      "description": "DEFRA air quality monitoring data"},
+    "ons_census":         {"licence": "ogl",      "description": "ONS Census 2021 population data"},
+    "police_crime":       {"licence": "ogl",      "description": "Police.uk crime statistics"},
+    "dft_traffic":        {"licence": "ogl",      "description": "DfT road traffic statistics"},
+    "osm_berkshire":      {"licence": "odbl",     "description": "OpenStreetMap Berkshire extract"},
+    "nhs_admissions":     {"licence": "cc_by_nc", "description": "NHS hospital admissions (simulated)"},
+    "met_office_weather": {"licence": "cc_by_sa", "description": "Met Office weather data"},
+    "ons_health_stats":   {"licence": "ogl",      "description": "ONS health statistics (OGL alternative)"},
 }
 
-# Domain similarity mapping─
+# Domain similarity mapping 
 # Maps each dataset to closest domain-similar alternatives
 # Used by XOR-split re-planner to find best alternative
 DOMAIN_ALTERNATIVES = {
@@ -37,10 +35,11 @@ DOMAIN_ALTERNATIVES = {
     "ons_health_stats":   ["ons_census", "police_crime"],
 }
 
-# Query Scenarios
+# Query Scenarios 
+# Updated goals to match actual dataset content
 QUERY_SCENARIOS = {
     "scenario_1": {
-        "goal": "Analyse air pollution vs health outcomes",
+        "goal": "Analyse air pollution vs health outcomes by region",
         "datasets": ["air_quality", "nhs_admissions"],
         "operations": ["load", "clean", "merge", "analyse"]
     },
@@ -50,8 +49,8 @@ QUERY_SCENARIOS = {
         "operations": ["load", "clean", "merge", "analyse"]
     },
     "scenario_3": {
-        "goal": "Correlate energy use with weather patterns",
-        "datasets": ["air_quality", "met_office_weather"],
+        "goal": "Correlate population data with weather monitoring",
+        "datasets": ["ons_census", "met_office_weather"],
         "operations": ["load", "clean", "merge", "analyse"]
     },
     "scenario_4": {
@@ -60,16 +59,16 @@ QUERY_SCENARIOS = {
         "operations": ["load", "clean", "merge", "analyse"]
     },
     "scenario_5": {
-        "goal": "Map flood risk against road infrastructure",
-        "datasets": ["dft_traffic", "osm_berkshire"],
+        "goal": "Map road infrastructure against geographic data",
+        "datasets": ["ons_census", "osm_berkshire"],
         "operations": ["load", "clean", "merge", "analyse"]
     },
 }
 
+
 class PipelinePlanner:
     """
-    Constructs policy-compliant analytics pipelines
-    grounded in YAWL workflow patterns.
+    Constructs policy-compliant analytics pipelines grounded in YAWL workflow patterns.
 
     YAWL patterns used:
     - Sequence: ordered pipeline steps
@@ -104,7 +103,6 @@ class PipelinePlanner:
                 return alt
 
         # Step 2: Fallback to any available OGL dataset
-        print(f"  No domain-similar alternative - using fallback")
         for alt_name, alt_info in self.registry.items():
             if alt_name in excluded:
                 continue
@@ -152,7 +150,6 @@ class PipelinePlanner:
                 if d1 in excluded_datasets or d2 in excluded_datasets:
                     violated = d2 if d2 in excluded_datasets else d1
                     alt = self.find_alternative(violated, excluded_datasets)
-                    
                     if alt:
                         if d2 in excluded_datasets:
                             datasets = [d1, alt]
@@ -211,9 +208,9 @@ class PipelinePlanner:
     def replan(self, scenario_id, violated_dataset,
                excluded_datasets, violation_info):
         """
-        Re-planning: run planner again with violated constraint
-        as new condition (per Julian's feedback).
-        Finds closest achievable alternative.
+        Re-planning: run planner again with violated constraint as new condition (per Julian's feedback).
+        Finds closest achievable domain-similar alternative.
+        Prevents d1==d2 degenerate merging.
         """
         print(f"\n{'-'*60}")
         print(f"RE-PLANNING...")
@@ -222,15 +219,32 @@ class PipelinePlanner:
         print(f"{'-'*60}")
 
         new_excluded = excluded_datasets + [violated_dataset]
+
+        # Get the non-violated dataset in the original pair
+        scenario = QUERY_SCENARIOS[scenario_id]
+        original_datasets = scenario["datasets"]
+        other_dataset = [d for d in original_datasets
+                         if d != violated_dataset][0]
+
+        # Find alternative - must be different from other_dataset
         alt_dataset = self.find_alternative(violated_dataset, new_excluded)
+
+        # Fix d1==d2 problem: if alternative is same as other dataset
+        # search again excluding other_dataset as well
+        if alt_dataset and alt_dataset == other_dataset:
+            print(f"  Alternative matches existing dataset - searching further...")
+            extended_excluded = new_excluded + [other_dataset]
+            alt_dataset = self.find_alternative(
+                violated_dataset, extended_excluded
+            )
 
         if alt_dataset:
             print(f"Alternative found: {alt_dataset} "
                   f"({self.get_licence(alt_dataset)})")
             return self.build_pipeline(scenario_id, new_excluded)
         else:
-            print(f"No alternative found - closest achievable:")
-            print(f"Running with available OGL datasets only")
+            print(f"No valid alternative found.")
+            print(f"Closest achievable: pipeline with available OGL datasets")
             return {
                 "status": "partial",
                 "goal": QUERY_SCENARIOS[scenario_id]["goal"],
@@ -242,7 +256,7 @@ class PipelinePlanner:
             }
 
 
-# ── Run all 5 scenarios ───────────────────────────────────────
+# Run all 5 scenarios 
 if __name__ == "__main__":
     planner = PipelinePlanner()
 
