@@ -1,0 +1,101 @@
+admission_id,hospital_code,admission_date,diagnosis_code,length_of_stay_days,region,age_group,admission_type
+1001,RYJ,2025-01-01,J44,2,Midlands,55-74,Emergency
+1002,RAX,2025-01-04,J45,6,South West,18-34,Emergency
+1003,RRV,2025-01-07,J44,6,South West,18-34,Emergency
+1004,RAX,2025-01-10,I10,11,South West,75+,Emergency
+1005,RAX,2025-01-13,J45,1,South East,18-34,Elective
+1006,RQM,2025-01-16,F32,9,Midlands,75+,Emergency
+1007,RRV,2025-01-19,E11,12,London,0-17,Emergency
+1008,RRV,2025-01-22,J44,11,East of England,55-74,Maternity
+1009,RRV,2025-01-25,E11,6,London,75+,Emergency
+1010,RAX,2025-01-28,E11,13,Midlands,0-17,Maternity
+1011,RYJ,2025-01-31,J45,3,East of England,18-34,Elective
+1012,RRV,2025-02-03,E11,4,Midlands,18-34,Emergency
+1013,RAX,2025-02-06,F32,12,South West,0-17,Maternity
+1014,RQM,2025-02-09,E11,11,East of England,18-34,Maternity
+1015,RYJ,2025-02-12,J45,4,South West,0-17,Elective
+1016,RQM,2025-02-15,F32,3,London,75+,Emergency
+1017,RYJ,2025-02-18,I10,10,London,75+,Emergency
+1018,RAX,2025-02-21,E11,3,East of England,0-17,Maternity
+1019,RJ1,2025-02-24,J45,3,East of England,75+,Emergency
+1020,RYJ,2025-02-27,I10,4,Midlands,75+,Maternity
+1021,RQM,2025-03-02,I10,7,Midlands,75+,Emergency
+1022,RAX,2025-03-05,J44,4,South West,35-54,Maternity
+1023,RYJ,2025-03-08,F32,9,East of England,55-74,Emergency
+1024,RJ1,2025-03-11,E11,1,London,18-34,Elective
+1025,RJ1,2025-03-14,J45,8,Midlands,35-54,Emergency
+1026,RRV,2025-03-17,J44,7,Midlands,75+,Emergency
+1027,RRV,2025-03-20,F32,2,London,0-17,Elective
+1028,RQM,2025-03-23,J44,8,Midlands,75+,Emergency
+1029,RYJ,2025-03-26,F32,1,South West,55-74,Elective
+1030,RYJ,2025-03-29,F32,11,East of England,75+,Emergency
+1031,RRV,2025-04-01,E11,12,London,0-17,Maternity
+1032,RYJ,2025-04-04,F32,9,East of England,55-74,Maternity
+1033,RYJ,2025-04-07,J44,9,Midlands,75+,Emergency
+1034,RJ1,2025-04-10,F32,2,Midlands,55-74,Emergency
+1035,RRV,2025-04-13,E11,7,London,18-34,Emergency
+1036,RAX,2025-04-16,E11,10,South West,18-34,Maternity
+1037,RRV,2025-04-19,J44,3,South East,75+,Emergency
+1038,RAX,2025-04-22,I10,7,London,55-74,Maternity
+1039,RJ1,2025-04-25,I10,12,South East,0-17,Elective
+1040,RQM,2025-04-28,F32,10,South East,75+,Maternity
+1041,RYJ,2025-05-01,J45,9,South West,18-34,Maternity
+1042,RJ1,2025-05-04,F32,4,South East,18-34,Elective
+1043,RYJ,2025-05-07,J44,12,South East,75+,Maternity
+1044,RQM,2025-05-10,J44,1,South West,55-74,Emergency
+1045,RQM,2025-05-13,J44,2,South East,18-34,Emergency
+1046,RJ1,2025-05-16,J44,1,South East,55-74,Maternity
+1047,RQM,2025-05-19,J44,12,South East,18-34,Emergency
+1048,RAX,2025-05-22,E11,5,London,18-34,Maternity
+1049,RQM,2025-05-25,I10,5,London,35-54,Emergency
+1050,RYJ,2025-05-28,J44,11,London,18-34,Emergency
+1051,RYJ,2025-05-31,J45,7,South West,0-17,Maternity
+1052,RYJ,2025-06-03,J45,9,Midlands,75+,Emergency
+1053,RYJ,2025-06-06,J45,9,South East,75+,Maternity
+1054,RAX,2025-06-09,J45,3,South East,55-74,Emergency
+1055,RRV,2025-06-12,E11,3,South West,18-34,Emergency
+1056,RJ1,2025-06-15,J45,3,South East,0-17,Elective
+1057,RYJ,2025-06-18,J44,4,London,55-74,Elective
+1058,RQM,2025-06-21,F32,8,Midlands,35-54,Maternity
+1059,RYJ,2025-06-24,J45,6,East of England,55-74,Elective
+1060,RQM,2025-06-27,E11,8,South East,55-74,Maternity
+1061,RQM,2025-06-30,E11,1,London,18-34,Elective
+1062,RYJ,2025-07-03,J45,8,East of England,35-54,Emergency
+1063,RAX,2025-07-06,F32,4,Midlands,55-74,Maternity
+1064,RQM,2025-07-09,J45,11,East of England,0-17,Maternity
+1065,RQM,2025-07-12,E11,1,London,0-17,Emergency
+1066,RYJ,2025-07-15,I10,8,East of England,75+,Maternity
+1067,RQM,2025-07-18,J44,4,South West,35-54,Maternity
+1068,RQM,2025-07-21,E11,6,East of England,35-54,Elective
+1069,RYJ,2025-07-24,J45,8,South East,75+,Maternity
+1070,RYJ,2025-07-27,J44,4,South East,55-74,Emergency
+1071,RJ1,2025-07-30,J45,3,South West,35-54,Elective
+1072,RAX,2025-08-02,J45,9,London,0-17,Elective
+1073,RAX,2025-08-05,I10,3,South East,0-17,Emergency
+1074,RQM,2025-08-08,J44,9,Midlands,18-34,Emergency
+1075,RAX,2025-08-11,J44,13,South East,35-54,Elective
+1076,RQM,2025-08-14,I10,2,South East,55-74,Maternity
+1077,RJ1,2025-08-17,E11,2,London,75+,Elective
+1078,RYJ,2025-08-20,J45,2,East of England,75+,Emergency
+1079,RYJ,2025-08-23,F32,6,South East,55-74,Elective
+1080,RYJ,2025-08-26,J45,3,South West,18-34,Emergency
+1081,RAX,2025-08-29,J45,13,East of England,75+,Elective
+1082,RJ1,2025-09-01,E11,9,Midlands,35-54,Maternity
+1083,RAX,2025-09-04,J45,4,London,18-34,Elective
+1084,RAX,2025-09-07,I10,1,Midlands,35-54,Elective
+1085,RJ1,2025-09-10,I10,4,East of England,0-17,Emergency
+1086,RJ1,2025-09-13,J44,1,East of England,18-34,Emergency
+1087,RJ1,2025-09-16,F32,5,East of England,75+,Emergency
+1088,RJ1,2025-09-19,J45,4,Midlands,18-34,Elective
+1089,RYJ,2025-09-22,J45,8,East of England,18-34,Maternity
+1090,RRV,2025-09-25,E11,8,Midlands,18-34,Emergency
+1091,RRV,2025-09-28,I10,7,East of England,18-34,Emergency
+1092,RJ1,2025-10-01,F32,3,South West,35-54,Elective
+1093,RRV,2025-10-04,J44,1,East of England,0-17,Emergency
+1094,RRV,2025-10-07,I10,1,Midlands,55-74,Maternity
+1095,RJ1,2025-10-10,J44,12,South East,18-34,Maternity
+1096,RRV,2025-10-13,E11,11,East of England,75+,Emergency
+1097,RAX,2025-10-16,E11,3,South East,18-34,Emergency
+1098,RQM,2025-10-19,J45,6,South West,75+,Elective
+1099,RQM,2025-10-22,F32,7,London,35-54,Maternity
+1100,RJ1,2025-10-25,J44,6,South West,75+,Maternity
