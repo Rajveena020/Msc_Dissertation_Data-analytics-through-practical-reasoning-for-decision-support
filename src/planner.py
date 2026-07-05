@@ -16,8 +16,9 @@ DATASET_REGISTRY = {
     "police_crime":       {"licence": "ogl",      "description": "Police.uk crime statistics"},
     "dft_traffic":        {"licence": "ogl",      "description": "DfT road traffic statistics"},
     "osm_berkshire":      {"licence": "odbl",     "description": "OpenStreetMap Berkshire extract"},
+    "met_office_weather": {"licence": "cc_by_sa", "description": "Met Office weather data (synthetic)"},
     "nhs_admissions":     {"licence": "cc_by_nc", "description": "NHS hospital admissions (simulated)"},
-    "met_office_weather": {"licence": "cc_by_sa", "description": "Met Office weather data"},
+    "met_office_scotland":{"licence": "cc_by_sa", "description": "Met Office Scotland regional data (synthetic)"},
     "ons_health_stats":   {"licence": "ogl",      "description": "ONS health statistics (OGL alternative)"},
 }
 
@@ -33,6 +34,16 @@ DOMAIN_ALTERNATIVES = {
     "ons_census":         ["police_crime", "dft_traffic"],
     "police_crime":       ["ons_census", "dft_traffic"],
     "ons_health_stats":   ["ons_census", "police_crime"],
+    "met_office_scotland": ["met_office_weather", "ons_census"],
+}
+# Licence Restrictiveness Ranking 
+# Used to determine the licence of the derived (output) dataset after merging. Most-restrictive-wins rule.
+LICENCE_RANK = {
+    "ogl":       1,   # Least restrictive
+    "cc_by":     2,
+    "cc_by_sa":  3,
+    "odbl":      3,
+    "cc_by_nc":  4,   # Most restrictive
 }
 
 # Query Scenarios 
@@ -63,8 +74,12 @@ QUERY_SCENARIOS = {
         "datasets": ["ons_census", "osm_berkshire"],
         "operations": ["load", "clean", "merge", "analyse"]
     },
+    "scenario_6": {
+        "goal": "Combine weather monitoring across UK regions",
+        "datasets": ["met_office_weather", "met_office_scotland"],
+        "operations": ["load", "clean", "merge", "analyse"]
+    }
 }
-
 
 class PipelinePlanner:
     """
@@ -85,35 +100,63 @@ class PipelinePlanner:
             return self.registry[dataset]["licence"]
         return None
 
-    def find_alternative(self, dataset, excluded):
+    def find_alternative(self, dataset, excluded, target_licence=None):
         """
         XOR-split pattern: find the closest domain-similar alternative dataset when a violation is detected.
-        First tries domain-similar alternatives from DOMAIN_ALTERNATIVES mapping, then falls back to any available OGL dataset.
-        Returns None if no alternative found.
+        If target_licence is specified, prefers alternatives with that licence. Otherwise defaults to OGL alternatives.
+
+        Priority order:
+        1. Domain-similar alternative with target licence
+        2. Domain-similar alternative with OGL
+        3. Any dataset with target licence
+        4. Any OGL dataset (fallback)
         """
-        # Step 1: Try domain-similar alternatives first
+        preferred_licence = target_licence if target_licence else "ogl"
+
+        # Try domain-similar with preferred licence first
         similar = DOMAIN_ALTERNATIVES.get(dataset, [])
         for alt in similar:
-            if alt in excluded:
+            if alt in excluded or alt == dataset:
                 continue
-            if alt == dataset:
-                continue
-            alt_licence = self.get_licence(alt)
-            if alt_licence == "ogl":
+            if self.get_licence(alt) == preferred_licence:
                 return alt
 
-        # Step 2: Fallback to any available OGL dataset
+        # Try any dataset with preferred licence
         for alt_name, alt_info in self.registry.items():
-            if alt_name in excluded:
+            if alt_name in excluded or alt_name == dataset:
                 continue
-            if alt_name == dataset:
-                continue
-            if alt_info["licence"] == "ogl":
+            if alt_info["licence"] == preferred_licence:
                 return alt_name
 
-        return None
+        # Fallback: OGL if not already tried
+        if preferred_licence != "ogl":
+            for alt_name, alt_info in self.registry.items():
+                if alt_name in excluded or alt_name == dataset:
+                    continue
+                if alt_info["licence"] == "ogl":
+                    return alt_name
 
-    def build_pipeline(self, scenario_id, excluded_datasets=None):
+        return None
+    
+    def derive_output_licence(self, d1, d2):
+        """
+        Determine the licence of the derived dataset after merging. Applies the most-restrictive-wins rule: the output inherits
+        the more restrictive of the two input licences.
+
+        """
+        l1 = self.get_licence(d1)
+        l2 = self.get_licence(d2)
+
+        rank1 = LICENCE_RANK.get(l1, 0)
+        rank2 = LICENCE_RANK.get(l2, 0)
+
+        # Most restrictive wins
+        if rank1 >= rank2:
+            return l1
+        else:
+            return l2
+
+    def build_pipeline(self, scenario_id, excluded_datasets=None, target_licence=None):
         """
         Build a policy-compliant pipeline for a given scenario.
         Uses YAWL sequence pattern for step ordering.
@@ -130,6 +173,8 @@ class PipelinePlanner:
 
         print(f"\n{'='*60}")
         print(f"PLANNING PIPELINE FOR: {goal}")
+        if target_licence:
+            print(f"Target output licence: {target_licence}")
         print(f"{'='*60}")
 
         pipeline_steps = []
@@ -168,6 +213,10 @@ class PipelinePlanner:
                 print(f"\nStep {i+1}: {operation.upper()}")
                 print(f"  Checking: {d1} ({l1}) + {d2} ({l2})")
 
+                # Report what the derived licence WOULD be if this went ahead
+                would_be_licence = self.derive_output_licence(d1, d2)
+                print(f"  Would-be output licence: {would_be_licence}")
+
                 result = self.checker.check(d1, l1, d2, l2)
 
                 if result["compliant"]:
@@ -186,7 +235,7 @@ class PipelinePlanner:
                     pipeline_steps.append(step)
                     return self.replan(
                         scenario_id, d2,
-                        excluded_datasets, violation_info
+                        excluded_datasets, violation_info, target_licence
                     )
             else:
                 step["status"] = "complete"
@@ -194,21 +243,28 @@ class PipelinePlanner:
 
             pipeline_steps.append(step)
 
+        # Determine derived output licence for the successful pipeline
+        if len(datasets) >= 2:
+            output_licence = self.derive_output_licence(datasets[0], datasets[1])
+        else:
+            output_licence = self.get_licence(datasets[0]) if datasets else None
+
         print(f"\nPIPELINE STATUS: COMPLETE ✓")
         print(f"All steps executed successfully")
+        print(f"Output dataset licence: {output_licence}")
         return {
             "status": "success",
             "goal": goal,
             "pipeline": pipeline_steps,
             "datasets_used": datasets,
+            "output_licence": output_licence,
             "replanned": len(excluded_datasets) > 0,
             "violation": None
         }
 
-    def replan(self, scenario_id, violated_dataset,
-               excluded_datasets, violation_info):
+    def replan(self, scenario_id, violated_dataset, excluded_datasets, violation_info, target_licence=None):
         """
-        Re-planning: run planner again with violated constraint as new condition (per Julian's feedback).
+        Re-planning: run planner again with violated constraint as new condition.
         Finds closest achievable domain-similar alternative.
         Prevents d1==d2 degenerate merging.
         """
@@ -227,7 +283,7 @@ class PipelinePlanner:
                          if d != violated_dataset][0]
 
         # Find alternative - must be different from other_dataset
-        alt_dataset = self.find_alternative(violated_dataset, new_excluded)
+        alt_dataset = self.find_alternative(violated_dataset, new_excluded, target_licence)
 
         # Fix d1==d2 problem: if alternative is same as other dataset
         # search again excluding other_dataset as well
@@ -235,13 +291,16 @@ class PipelinePlanner:
             print(f"  Alternative matches existing dataset - searching further...")
             extended_excluded = new_excluded + [other_dataset]
             alt_dataset = self.find_alternative(
-                violated_dataset, extended_excluded
+                violated_dataset, extended_excluded, target_licence
             )
 
         if alt_dataset:
+            # Report what the derived licence will now be after re-plan
+            new_derived = self.derive_output_licence(other_dataset, alt_dataset)
             print(f"Alternative found: {alt_dataset} "
                   f"({self.get_licence(alt_dataset)})")
-            return self.build_pipeline(scenario_id, new_excluded)
+            print(f"Re-planned output licence: {new_derived}")
+            return self.build_pipeline(scenario_id, new_excluded, target_licence)
         else:
             print(f"No valid alternative found.")
             print(f"Closest achievable: pipeline with available OGL datasets")

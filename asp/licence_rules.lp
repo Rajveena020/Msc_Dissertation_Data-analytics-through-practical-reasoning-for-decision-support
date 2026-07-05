@@ -23,6 +23,21 @@ compatible(D1, D2) :-
     licence(D1, cc_by),
     licence(D2, cc_by).
 
+% CC-BY-SA + CC-BY-SA = compatible (same share-alike)
+compatible(D1, D2) :-
+    licence(D1, cc_by_sa),
+    licence(D2, cc_by_sa).
+
+% ODbL + ODbL = compatible (same share-alike)
+compatible(D1, D2) :-
+    licence(D1, odbl),
+    licence(D2, odbl).
+
+% CC-BY-NC + CC-BY-NC = compatible (same non-commercial)
+compatible(D1, D2) :-
+    licence(D1, cc_by_nc),
+    licence(D2, cc_by_nc).
+
 % Violation rules 
 
 % OGL + CC-BY-NC = violation (commercial restriction)
@@ -113,3 +128,8 @@ replan_constraint(D1, D2, exclude(D2)) :-
 
 replan_constraint(D1, D2, exclude(D2)) :-
     violation(D1, D2, nc_sa_conflict).
+
+
+
+
+    
