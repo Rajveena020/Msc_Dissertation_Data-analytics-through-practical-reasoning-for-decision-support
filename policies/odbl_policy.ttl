@@ -1,7 +1,7 @@
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> 
-@prefix dc: <http://purl.org/dc/terms/> 
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> 
-@prefix ex: <http://example.org/policy/> 
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . 
+@prefix ex: <http://example.org/policy/> .
 
 # =======================================================================================
 # Cross-reference: rdflicense ODbL encoding at:http://purl.org/NET/rdflicense/ODbL1.0
