@@ -89,19 +89,11 @@ def run_evaluation():
         col_time = round(time.time() - start, 4)
 
         # Run 3: baseline (no checking)
-        # Only run baseline for scenarios 1-5 (baseline
-        # does not know about scenario_6)
-        if scenario_id in ["scenario_1", "scenario_2",
-                           "scenario_3", "scenario_4", "scenario_5"]:
-            start = time.time()
-            baseline_result = baseline.run(scenario_id)
-            baseline_time = round(time.time() - start, 4)
-            baseline_correct = baseline_result["licence_correct"]
-            baseline_violation = baseline_result["undetected_violation"]
-        else:
-            baseline_time = None
-            baseline_correct = None
-            baseline_violation = None
+        start = time.time()
+        baseline_result = baseline.run(scenario_id)
+        baseline_time = round(time.time() - start, 4)
+        baseline_correct = baseline_result["licence_correct"]
+        baseline_violation = baseline_result["undetected_violation"]
 
         # Record results 
         row = {
