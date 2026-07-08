@@ -17,7 +17,7 @@ def test_ogl_ogl_compliant():
     print("PASS: OGL + OGL is compliant")
 
 def test_ogl_cc_by_sa_violation():
-    result = checker.check("air_quality", "ogl", "met_office", "cc_by_sa")
+    result = checker.check("air_quality", "ogl", "met_office_weather", "cc_by_sa")
     assert result["compliant"] == False
     assert result["violation_type"] == "share_alike_conflict"
     print("PASS: OGL + CC-BY-SA violation detected")
@@ -29,7 +29,7 @@ def test_ogl_odbl_violation():
     print("PASS: OGL + ODbL violation detected")
 
 def test_cc_by_nc_cc_by_sa_violation():
-    result = checker.check("dataset_a", "cc_by_nc", "dataset_b", "cc_by_sa")
+    result = checker.check("nhs_admissions", "cc_by_nc", "met_office_weather", "cc_by_sa")
     assert result["compliant"] == False
     assert result["violation_type"] == "nc_sa_conflict"
     print("PASS: CC-BY-NC + CC-BY-SA violation detected")

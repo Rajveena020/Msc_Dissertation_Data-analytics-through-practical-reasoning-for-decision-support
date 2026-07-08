@@ -22,6 +22,8 @@ class PolicyChecker:
         violation_type = None
         explanation = None
         compliant = True
+        # Note: uses string matching on the model output, which is fragile for extending to new licence types. A more robust implementation 
+        # would use the clingo symbol API to iterate over model atoms directly. Documented here as a limitation.
         with ctl.solve(yield_=True) as handle:
             for model in handle:
                 atoms = str(model)
@@ -39,8 +41,10 @@ class PolicyChecker:
                     elif "nc_sa_conflict" in atoms:
                         violation_type = "nc_sa_conflict"
                         explanation = f"CC-BY-NC and CC-BY-SA are mutually incompatible"
-                else:
-                    explanation = f"Combining {dataset1} with {dataset2} is compliant"
+        # Moved outside the loop: only set the compliant explanation once, after checking all models, rather than repeatedly inside the loop.
+        if compliant and violation_type is None:
+            explanation = f"Combining {dataset1} with {dataset2} is compliant"
+
         return {"compliant": compliant, "violation_type": violation_type, "explanation": explanation, "datasets": [dataset1, dataset2]}
 
 if __name__ == "__main__":
