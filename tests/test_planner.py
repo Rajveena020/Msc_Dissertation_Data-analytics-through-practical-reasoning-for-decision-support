@@ -48,26 +48,55 @@ def test_scenario_5_replanning():
     assert result["replanned"] == True
     print("PASS: Scenario 5 - ODbL conflict resolved by re-planner")
 
+def test_scenario_6_compatible_same_licence():
+    """CC-BY-SA + CC-BY-SA - compatible, no re-planning,
+       derived licence preserved as CC-BY-SA"""
+    result = planner.build_pipeline("scenario_6")
+    assert result["status"] == "success"
+    assert result["replanned"] == False
+    assert result["output_licence"] == "cc_by_sa"
+    print("PASS: Scenario 6 - same-family CC-BY-SA compatible,"
+          " output licence preserved (derived licence reasoning)")
+
+def test_scenario_7_no_alternative():
+    """Failure case: no compliant alternative exists (O4)"""
+    result = planner.build_pipeline("scenario_7")
+    assert result["status"] == "partial"
+    assert result["replanned"] == True
+    print("PASS: Scenario 7 - correctly reports no compliant alternative"
+          " (Objective O4)")
+
 def test_end_to_end_integration():
-    """Full integration test: query to compliant pipeline"""
-    # Run all 5 scenarios
+    """Full integration test: all scenarios behave as expected"""
     results = []
     for scenario_id in ["scenario_1", "scenario_2", "scenario_3",
-                        "scenario_4", "scenario_5"]:
+                        "scenario_4", "scenario_5", "scenario_6",
+                        "scenario_7"]:
         result = planner.build_pipeline(scenario_id)
         results.append(result)
 
-    # All must succeed
-    assert all(r["status"] == "success" for r in results)
+    # Scenarios 1-6 must succeed
+    assert results[0]["status"] == "success"  # re-planned
+    assert results[1]["status"] == "success"  # compliant
+    assert results[2]["status"] == "success"  # re-planned
+    assert results[3]["status"] == "success"  # re-planned
+    assert results[4]["status"] == "success"  # re-planned
+    assert results[5]["status"] == "success"  # compatible same-family
 
-    # Scenarios 1,3,4,5 must have triggered re-planning
-    assert results[0]["replanned"] == True
-    assert results[1]["replanned"] == False
-    assert results[2]["replanned"] == True
-    assert results[3]["replanned"] == True
-    assert results[4]["replanned"] == True
+    # Scenario 7 must correctly report partial
+    assert results[6]["status"] == "partial"
 
-    print("PASS: End-to-end integration - all 5 scenarios successful")
+    # Re-planning breakdown
+    assert results[0]["replanned"] == True   # OGL + CC-BY-NC
+    assert results[1]["replanned"] == False  # OGL + OGL
+    assert results[2]["replanned"] == True   # OGL + CC-BY-SA
+    assert results[3]["replanned"] == True   # OGL + CC-BY-NC
+    assert results[4]["replanned"] == True   # OGL + ODbL
+    assert results[5]["replanned"] == False  # CC-BY-SA + CC-BY-SA
+    assert results[6]["replanned"] == True   # attempted re-plan
+
+    print("PASS: End-to-end integration - all 7 scenarios behave correctly")
+
 
 if __name__ == "__main__":
     print("=" * 55)
@@ -78,6 +107,8 @@ if __name__ == "__main__":
     test_scenario_3_replanning()
     test_scenario_4_replanning()
     test_scenario_5_replanning()
+    test_scenario_6_compatible_same_licence()
+    test_scenario_7_no_alternative()
     test_end_to_end_integration()
     print()
     print("ALL INTEGRATION TESTS PASSED!")

@@ -8,6 +8,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.checker import PolicyChecker
+from src.column_checker import ColumnLevelChecker
 
 # Dataset Registry 
 DATASET_REGISTRY = {
@@ -78,7 +79,13 @@ QUERY_SCENARIOS = {
         "goal": "Combine weather monitoring across UK regions",
         "datasets": ["met_office_weather", "met_office_scotland"],
         "operations": ["load", "clean", "merge", "analyse"]
-    }
+    },
+    "scenario_7": {
+        "goal": "Combine highly restricted datasets with no compliant alternative",
+        "datasets": ["nhs_admissions", "met_office_weather"],
+        "operations": ["load", "clean", "merge", "analyse"],
+        "excluded_by_default": ["ons_health_stats", "air_quality","ons_census", "police_crime", "dft_traffic"]
+    } 
 }
 
 class PipelinePlanner:
@@ -91,9 +98,11 @@ class PipelinePlanner:
     - Cancellation: cancel remaining steps on re-plan trigger
     """
 
-    def __init__(self):
+    def __init__(self, use_column_level=False):
         self.checker = PolicyChecker()
+        self.column_checker = ColumnLevelChecker() if use_column_level else None
         self.registry = DATASET_REGISTRY
+        self.use_column_level = use_column_level
 
     def get_licence(self, dataset):
         if dataset in self.registry:
@@ -163,13 +172,20 @@ class PipelinePlanner:
         Calls checker before each merge step.
         If violation detected, triggers re-planning.
         """
-        if excluded_datasets is None:
-            excluded_datasets = []
+       # if excluded_datasets is None:
+        #    excluded_datasets = list(scenario.get("excluded_by_default", []))
 
         scenario = QUERY_SCENARIOS[scenario_id]
         goal = scenario["goal"]
         datasets = list(scenario["datasets"])
         operations = scenario["operations"]
+        
+       
+
+        if excluded_datasets is None:
+            excluded_datasets = list(
+                scenario.get("excluded_by_default", [])
+            )
 
         print(f"\n{'='*60}")
         print(f"PLANNING PIPELINE FOR: {goal}")
@@ -231,6 +247,52 @@ class PipelinePlanner:
                     print(f"  Status: VIOLATION ✗")
                     print(f"  Type: {result['violation_type']}")
                     print(f"  Explanation: {result['explanation']}")
+
+                    # Column-level fallback 
+                    # Before triggering full re-plan, check if column-level compliance is possible.
+                    # This preserves more data than excluding the entire dataset.
+                   
+                    if self.use_column_level and self.column_checker:
+                        print(f"\n  Trying column-level compliance...")
+                        subset = self.column_checker.find_compliant_columns(
+                            d1, d2
+                        )
+                        if subset["safe_columns_dataset2"]:
+                            n_safe = len(subset["safe_columns_dataset2"])
+                            n_total = (
+                                n_safe +
+                                len(subset["excluded_columns_dataset2"])
+                            )
+                            print(f"  Column-level compliance possible!")
+                            print(f"  Preserving {subset['reduction_dataset2']}"
+                                  f" of {d2}")
+                            print(f"  Excluded columns: "
+                                  f"{subset['excluded_columns_dataset2']}")
+                            step["status"] = "column_level_compliant"
+                            step["datasets"] = [d1, d2]
+                            step["column_subset"] = subset
+                            pipeline_steps.append(step)
+
+                            # Continue pipeline with column-level result
+                            output_licence = self.derive_output_licence(d1, d2)
+                            print(f"\nPIPELINE STATUS: COMPLETE ✓")
+                            print(f"Column-level compliance achieved")
+                            print(f"Output dataset licence: {output_licence}")
+                            return {
+                                "status": "success",
+                                "goal": goal,
+                                "pipeline": pipeline_steps,
+                                "datasets_used": [d1, d2],
+                                "output_licence": output_licence,
+                                "replanned": False,
+                                "compliance_mode": "column_level",
+                                "column_subset": subset,
+                                "violation": None
+                            }
+
+                    # Full dataset re-plan 
+                    # No column-level fix possible: trigger full re-planning
+                    
                     print(f"\n  Triggering re-planner...")
                     pipeline_steps.append(step)
                     return self.replan(
@@ -260,6 +322,7 @@ class PipelinePlanner:
             "output_licence": output_licence,
             "replanned": len(excluded_datasets) > 0,
             "violation": None
+
         }
 
     def replan(self, scenario_id, violated_dataset, excluded_datasets, violation_info, target_licence=None):

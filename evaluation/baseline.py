@@ -1,30 +1,35 @@
 # ============================================================
 # baseline.py
-# Static Baseline Pipeline — No Policy Checking
+# Static Baseline Pipeline - No Policy Checking
 # Data Analytics through Practical Reasoning
+# Rajveena Sahu | MSc Dissertation | University of Bath
 #
-# PURPOSE: This is the static baseline for comparison with the policy-aware pipeline planner. The baseline runs all
-# 5 scenarios WITHOUT any licence checking or re-planning. It produces licence-incorrect output silently, it never
-# detects or resolves policy violations. This baseline is used to evidence Objective O5.
+# PURPOSE: Static baseline for comparison with the policy-aware
+# planner. Runs all scenarios WITHOUT any licence checking or
+# re-planning. Produces licence-incorrect output silently.
+# Used to evidence Objective O5.
 # ============================================================
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 # Dataset Registry (same as planner) 
 DATASET_REGISTRY = {
-    "air_quality":        {"licence": "ogl",      "description": "DEFRA air quality monitoring data"},
-    "ons_census":         {"licence": "ogl",      "description": "ONS Census 2021 population data"},
-    "police_crime":       {"licence": "ogl",      "description": "Police.uk crime statistics"},
-    "dft_traffic":        {"licence": "ogl",      "description": "DfT road traffic statistics"},
-    "osm_berkshire":      {"licence": "odbl",     "description": "OpenStreetMap Berkshire extract"},
-    "nhs_admissions":     {"licence": "cc_by_nc", "description": "NHS hospital admissions (synthetic)"},
-    "met_office_weather": {"licence": "cc_by_sa", "description": "Met Office weather data (synthetic)"},
-    "ons_health_stats":   {"licence": "ogl",      "description": "ONS health statistics"},
+    "air_quality":         {"licence": "ogl",      "description": "DEFRA air quality monitoring data"},
+    "ons_census":          {"licence": "ogl",      "description": "ONS Census 2021 population data"},
+    "police_crime":        {"licence": "ogl",      "description": "Police.uk crime statistics"},
+    "dft_traffic":         {"licence": "ogl",      "description": "DfT road traffic statistics"},
+    "osm_berkshire":       {"licence": "odbl",     "description": "OpenStreetMap Berkshire extract"},
+    "nhs_admissions":      {"licence": "cc_by_nc", "description": "NHS hospital admissions (synthetic)"},
+    "met_office_weather":  {"licence": "cc_by_sa", "description": "Met Office weather data (synthetic)"},
+    "met_office_scotland": {"licence": "cc_by_sa", "description": "Met Office Scotland regional data (synthetic)"},
+    "ons_health_stats":    {"licence": "ogl",      "description": "ONS health statistics"},
 }
 
-# Query Scenarios (same as planner) 
+# Query Scenarios
 QUERY_SCENARIOS = {
     "scenario_1": {
         "goal": "Analyse air pollution vs health outcomes by region",
@@ -51,9 +56,19 @@ QUERY_SCENARIOS = {
         "datasets": ["ons_census", "osm_berkshire"],
         "operations": ["load", "clean", "merge", "analyse"]
     },
+    "scenario_6": {
+        "goal": "Combine weather monitoring across UK regions",
+        "datasets": ["met_office_weather", "met_office_scotland"],
+        "operations": ["load", "clean", "merge", "analyse"]
+    },
+    "scenario_7": {
+        "goal": "Combine highly restricted datasets with no compliant alternative",
+        "datasets": ["nhs_admissions", "met_office_weather"],
+        "operations": ["load", "clean", "merge", "analyse"]
+    },
 }
 
-# Known violations (for comparison only)
+# Known violations (for comparison only) 
 # These are the violations the baseline FAILS to detect
 KNOWN_VIOLATIONS = {
     "scenario_1": "cc_by_nc_restriction",
@@ -61,6 +76,8 @@ KNOWN_VIOLATIONS = {
     "scenario_3": "share_alike_conflict",
     "scenario_4": "cc_by_nc_restriction",
     "scenario_5": "odbl_restriction",
+    "scenario_6": None,  # both CC-BY-SA - compatible
+    "scenario_7": "nc_sa_conflict",  # nhs_admissions + met_office_weather
 }
 
 
@@ -88,7 +105,6 @@ class BaselinePipeline:
         print(f"{'='*60}")
 
         pipeline_steps = []
-
         for i, operation in enumerate(operations):
             print(f"\nStep {i+1}: {operation.upper()} - complete")
             pipeline_steps.append({
@@ -120,7 +136,7 @@ class BaselinePipeline:
         }
 
 
-# Run all 5 scenarios 
+# Run all 7 scenarios 
 if __name__ == "__main__":
     baseline = BaselinePipeline()
     results = []
@@ -136,14 +152,15 @@ if __name__ == "__main__":
     print(f"\n{'='*60}")
     print(f"BASELINE SUMMARY")
     print(f"{'='*60}")
-    
+
     correct = sum(1 for r in results if r["licence_correct"])
     incorrect = sum(1 for r in results if not r["licence_correct"])
-    
-    print(f"Licence-correct pipelines:   {correct}/5")
-    print(f"Licence-incorrect pipelines: {incorrect}/5")
-    print(f"Violations detected:         0/5 (no checking performed)")
-    print(f"Re-planning triggered:       0/5 (no re-planning capability)")
+    total = len(results)
+
+    print(f"Licence-correct pipelines:   {correct}/{total}")
+    print(f"Licence-incorrect pipelines: {incorrect}/{total}")
+    print(f"Violations detected:         0/{total} (no checking performed)")
+    print(f"Re-planning triggered:       0/{total} (no re-planning capability)")
     print(f"\nConclusion: The baseline silently produces licence-incorrect")
-    print(f"output in {incorrect} out of 5 scenarios without any warning.")
+    print(f"output in {incorrect} out of {total} scenarios without any warning.")
     print(f"{'='*60}")
