@@ -4,7 +4,7 @@
 
 **Author:** Rajveena Sahu
 **Supervisor:** Prof. Julian Padget
-**Academic Year:** 2025–2026
+**Academic Year:** 2025-2026
 
 ---
 
