@@ -95,8 +95,7 @@ class ColumnLevelChecker:
 
     Extends the dataset-level checker with the ability to:
       1. Identify which specific columns cause a violation
-      2. Recommend which columns should be excluded to
-         achieve compliance
+      2. Recommend which columns should be excluded to achieve compliance
       3. Report the maximum-compliant column subset
     """
 
@@ -161,12 +160,8 @@ class ColumnLevelChecker:
 
     def find_compliant_columns(self, dataset1, dataset2):
         """
-        Given two datasets, identify the maximum subset of
-        columns from each that can be safely combined without
-        violating any licence.
-
-        Strategy: iteratively exclude columns from the more
-        restrictive dataset until all remaining pairs are compliant.
+        Given two datasets, identify the maximum subset of columns from each that can be safely combined without violating any licence.
+        Strategy: iteratively exclude columns from the more restrictive dataset until all remaining pairs are compliant.
         """
         cols1 = self.get_all_columns(dataset1)
         cols2 = self.get_all_columns(dataset2)
@@ -213,7 +208,7 @@ if __name__ == "__main__":
     ccc = ColumnLevelChecker()
 
     print("=" * 70)
-    print("COLUMN-LEVEL COMPLIANCE CHECKER — PROOF OF CONCEPT")
+    print("COLUMN-LEVEL COMPLIANCE CHECKER - PROOF OF CONCEPT")
     print("=" * 70)
 
     # Demo 1: Fine-grained detection 
