@@ -2,7 +2,6 @@
 # run_all.py
 # Formal Evaluation Script — System vs Baseline Comparison
 # Including column-level vs dataset-level comparison
-# Rajveena Sahu | MSc Dissertation | University of Bath
 # ============================================================
 
 import sys
@@ -19,10 +18,8 @@ RESULTS_FILE = os.path.join("evaluation", "results.csv")
 
 def calculate_preservation(col_result):
     """
-    Calculate how many columns were preserved in
-    column-level compliance mode.
-    Returns a string like '5/8 columns preserved'
-    or 'N/A' if column-level was not used.
+    Calculate how many columns were preserved in column-level compliance mode.
+    Returns a string like '5/8 columns preserved' or 'N/A' if column-level was not used.
     """
     if col_result.get("compliance_mode") == "column_level":
         subset = col_result.get("column_subset", {})
@@ -36,8 +33,7 @@ def calculate_preservation(col_result):
 def calculate_loss(ds_result):
     """
     Calculate data loss for dataset-level re-planning.
-    When re-planning occurs, the entire second dataset
-    is excluded — 100% data loss for that dataset.
+    When re-planning occurs, the entire second dataset is excluded — 100% data loss for that dataset.
     Returns a string describing the loss.
     """
     if ds_result.get("replanned"):
@@ -70,13 +66,13 @@ def run_evaluation():
     rows = []
 
     print("=" * 65)
-    print("FORMAL EVALUATION — SYSTEM VS BASELINE")
+    print("FORMAL EVALUATION - SYSTEM VS BASELINE")
     print("=" * 65)
 
     for scenario_id in scenarios:
-        print(f"\n{'─'*65}")
+        print(f"\n{'-'*65}")
         print(f"Evaluating {scenario_id}...")
-        print(f"{'─'*65}")
+        print(f"{'-'*65}")
 
         # Run 1: dataset-level compliance 
         start = time.time()
@@ -174,11 +170,11 @@ def run_evaluation():
         if r["baseline_licence_correct"] is not None
     )
 
-    print(f"  Dataset-level  — Licence-correct: {len(rows)}/{len(rows)}"
+    print(f"  Dataset-level  - Licence-correct: {len(rows)}/{len(rows)}"
           f" | Re-planned: {ds_replanned}/{len(rows)}")
-    print(f"  Column-level   — Licence-correct: {len(rows)}/{len(rows)}"
+    print(f"  Column-level   - Licence-correct: {len(rows)}/{len(rows)}"
           f" | Column-level used: {col_level_used}/{len(rows)}")
-    print(f"  Baseline       — Licence-correct: {bl_correct}/{bl_total}"
+    print(f"  Baseline       - Licence-correct: {bl_correct}/{bl_total}"
           f" | Violations missed: {bl_total-bl_correct}/{bl_total}")
     print(f"{'='*65}")
 
