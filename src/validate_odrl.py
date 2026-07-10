@@ -15,9 +15,7 @@ POLICY_FILES = [
 
 def validate_all():
     """
-    Parses each ODRL policy file using rdflib to confirm
-    that it is well-formed Turtle RDF. Reports the number
-    of triples in each graph.
+    Parses each ODRL policy file using rdflib to confirm that it is well-formed Turtle RDF. Reports the number of triples in each graph.
     """
     print("=" * 60)
     print("ODRL POLICY FILE VALIDATION")
