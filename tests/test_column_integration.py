@@ -8,9 +8,8 @@ from src.planner import PipelinePlanner
 
 def test_dataset_level_and_column_level_produce_different_outcomes():
     """
-    Verifies that dataset-level and column-level compliance
-    give different outcomes for the same scenario, and that
-    column-level preserves more data.
+    Verifies that dataset-level and column-level compliance give different outcomes for the same scenario, and that column-level preserves 
+    more data.
     """
     # Dataset-level planner
     ds_planner = PipelinePlanner(use_column_level=False)
@@ -35,8 +34,7 @@ def test_dataset_level_and_column_level_produce_different_outcomes():
 
 def test_column_level_identifies_specific_violating_columns():
     """
-    Verifies that the column-level checker identifies 
-    exactly which columns cause a violation.
+    Verifies that the column-level checker identifies exactly which columns cause a violation.
     """
     from src.column_checker import ColumnLevelChecker
     ccc = ColumnLevelChecker()

@@ -1,6 +1,7 @@
-% licence_rules.lp
+%=============================================
+%licence_rules.lp
 % ASP Policy Compliance Rules
-% Data Analytics through Practical Reasoning
+%=============================================
 
 % Compatibility rules
 
@@ -128,8 +129,3 @@ replan_constraint(D1, D2, exclude(D2)) :-
 
 replan_constraint(D1, D2, exclude(D2)) :-
     violation(D1, D2, nc_sa_conflict).
-
-
-
-
-    

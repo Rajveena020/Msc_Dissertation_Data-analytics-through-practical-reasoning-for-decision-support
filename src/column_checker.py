@@ -18,8 +18,7 @@ from src.checker import PolicyChecker
 
 # Column-Level Licence Registry 
 # Each column in each dataset carries its own licence.
-# This is where policy-carrying data (Padget & Vasconcelos 2018)
-# meets ODRL 2.2 compliance reasoning.
+# This is where policy-carrying data (Padget & Vasconcelos 2018) meets ODRL 2.2 compliance reasoning.
 COLUMN_REGISTRY = {
     "air_quality": {
         "date":              "ogl",

@@ -1,4 +1,4 @@
-=== DATASET LICENCE NOTES ===
+DATASET LICENCE NOTES :- 
 Last updated: 1 June 2026
 Purpose: ODRL policy encoding reference for dissertation
 
