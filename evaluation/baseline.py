@@ -1,12 +1,8 @@
 # ============================================================
 # baseline.py
 # Static Baseline Pipeline - No Policy Checking
-# Data Analytics through Practical Reasoning
-# Rajveena Sahu | MSc Dissertation | University of Bath
 #
-# PURPOSE: Static baseline for comparison with the policy-aware
-# planner. Runs all scenarios WITHOUT any licence checking or
-# re-planning. Produces licence-incorrect output silently.
+# PURPOSE: Static baseline for comparison with the policy-aware planner. Runs all scenarios WITHOUT any licence checking or re-planning. Produces licence-incorrect output silently.
 # Used to evidence Objective O5.
 # ============================================================
 
