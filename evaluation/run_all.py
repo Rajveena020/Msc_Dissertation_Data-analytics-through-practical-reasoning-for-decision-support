@@ -1,6 +1,6 @@
 # ============================================================
 # run_all.py
-# Formal Evaluation Script — System vs Baseline Comparison
+# Formal Evaluation Script - System vs Baseline Comparison
 # Including column-level vs dataset-level comparison
 # ============================================================
 
