@@ -1,0 +1,1152 @@
+[
+  {
+    "record_id": "REC-1000",
+    "admission_date": "2025-01-01",
+    "region": "London",
+    "hospital": {
+      "code": "RJ1",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 12,
+      "medication": "Salbutamol",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1001",
+    "admission_date": "2025-01-04",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 4,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1002",
+    "admission_date": "2025-01-07",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 5,
+      "medication": "Salbutamol",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1003",
+    "admission_date": "2025-01-10",
+    "region": "South West",
+    "hospital": {
+      "code": "RRV",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 2,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1004",
+    "admission_date": "2025-01-13",
+    "region": "South West",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 2,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1005",
+    "admission_date": "2025-01-16",
+    "region": "South West",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 1,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1006",
+    "admission_date": "2025-01-19",
+    "region": "South East",
+    "hospital": {
+      "code": "RJ1",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 3,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1007",
+    "admission_date": "2025-01-22",
+    "region": "South West",
+    "hospital": {
+      "code": "RJ1",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 8,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1008",
+    "admission_date": "2025-01-25",
+    "region": "South East",
+    "hospital": {
+      "code": "RRV",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 7,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1009",
+    "admission_date": "2025-01-28",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RRV",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 3,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1010",
+    "admission_date": "2025-01-31",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 7,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1011",
+    "admission_date": "2025-02-03",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 11,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Williams",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1012",
+    "admission_date": "2025-02-06",
+    "region": "London",
+    "hospital": {
+      "code": "RYJ",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 5,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1013",
+    "admission_date": "2025-02-09",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RRV",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 3,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1014",
+    "admission_date": "2025-02-12",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 6,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1015",
+    "admission_date": "2025-02-15",
+    "region": "London",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 6,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1016",
+    "admission_date": "2025-02-18",
+    "region": "South East",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 13,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1017",
+    "admission_date": "2025-02-21",
+    "region": "East of England",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 9,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1018",
+    "admission_date": "2025-02-24",
+    "region": "South West",
+    "hospital": {
+      "code": "RYJ",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 2,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1019",
+    "admission_date": "2025-02-27",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 4,
+      "medication": "Salbutamol",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1020",
+    "admission_date": "2025-03-02",
+    "region": "London",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 9,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1021",
+    "admission_date": "2025-03-05",
+    "region": "East of England",
+    "hospital": {
+      "code": "RQM",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 2,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1022",
+    "admission_date": "2025-03-08",
+    "region": "East of England",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 12,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1023",
+    "admission_date": "2025-03-11",
+    "region": "South East",
+    "hospital": {
+      "code": "RQM",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 5,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1024",
+    "admission_date": "2025-03-14",
+    "region": "East of England",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 13,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1025",
+    "admission_date": "2025-03-17",
+    "region": "East of England",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 7,
+      "medication": "Salbutamol",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Williams",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1026",
+    "admission_date": "2025-03-20",
+    "region": "East of England",
+    "hospital": {
+      "code": "RRV",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 4,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1027",
+    "admission_date": "2025-03-23",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 10,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1028",
+    "admission_date": "2025-03-26",
+    "region": "South East",
+    "hospital": {
+      "code": "RJ1",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 2,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Williams",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1029",
+    "admission_date": "2025-03-29",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 11,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1030",
+    "admission_date": "2025-04-01",
+    "region": "South West",
+    "hospital": {
+      "code": "RRV",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 7,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1031",
+    "admission_date": "2025-04-04",
+    "region": "South West",
+    "hospital": {
+      "code": "RJ1",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 9,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1032",
+    "admission_date": "2025-04-07",
+    "region": "South East",
+    "hospital": {
+      "code": "RRV",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 3,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1033",
+    "admission_date": "2025-04-10",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 3,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1034",
+    "admission_date": "2025-04-13",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 4,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1035",
+    "admission_date": "2025-04-16",
+    "region": "South West",
+    "hospital": {
+      "code": "RJ1",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 1,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1036",
+    "admission_date": "2025-04-19",
+    "region": "South East",
+    "hospital": {
+      "code": "RYJ",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 2,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1037",
+    "admission_date": "2025-04-22",
+    "region": "South West",
+    "hospital": {
+      "code": "RAX",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 5,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1038",
+    "admission_date": "2025-04-25",
+    "region": "South East",
+    "hospital": {
+      "code": "RQM",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "F32",
+      "length_of_stay": 12,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1039",
+    "admission_date": "2025-04-28",
+    "region": "South East",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 13,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Patel"
+    }
+  },
+  {
+    "record_id": "REC-1040",
+    "admission_date": "2025-05-01",
+    "region": "London",
+    "hospital": {
+      "code": "RYJ",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 14,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1041",
+    "admission_date": "2025-05-04",
+    "region": "South East",
+    "hospital": {
+      "code": "RQM",
+      "type": "NHS Trust"
+    },
+    "patient": {
+      "age_group": "18-34",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 5,
+      "medication": "Salbutamol",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1042",
+    "admission_date": "2025-05-07",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RYJ",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 3,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Chen",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1043",
+    "admission_date": "2025-05-10",
+    "region": "London",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J44",
+      "length_of_stay": 10,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Smith",
+      "validated_by": "Dr Williams"
+    }
+  },
+  {
+    "record_id": "REC-1044",
+    "admission_date": "2025-05-13",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RQM",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 9,
+      "medication": "Sertraline",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1045",
+    "admission_date": "2025-05-16",
+    "region": "East of England",
+    "hospital": {
+      "code": "RJ1",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "J45",
+      "length_of_stay": 12,
+      "medication": "Metformin",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Garcia",
+      "validated_by": "Dr Chen"
+    }
+  },
+  {
+    "record_id": "REC-1046",
+    "admission_date": "2025-05-19",
+    "region": "East of England",
+    "hospital": {
+      "code": "RRV",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "35-54",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 7,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1047",
+    "admission_date": "2025-05-22",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RRV",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "75+",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 5,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Williams",
+      "validated_by": "Dr Garcia"
+    }
+  },
+  {
+    "record_id": "REC-1048",
+    "admission_date": "2025-05-25",
+    "region": "Midlands",
+    "hospital": {
+      "code": "RRV",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "55-74",
+      "sex": "F"
+    },
+    "clinical": {
+      "diagnosis_code": "I10",
+      "length_of_stay": 9,
+      "medication": "Tiotropium",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Smith"
+    }
+  },
+  {
+    "record_id": "REC-1049",
+    "admission_date": "2025-05-28",
+    "region": "South West",
+    "hospital": {
+      "code": "RAX",
+      "type": "Foundation"
+    },
+    "patient": {
+      "age_group": "0-17",
+      "sex": "M"
+    },
+    "clinical": {
+      "diagnosis_code": "E11",
+      "length_of_stay": 4,
+      "medication": "Ramipril",
+      "notes": "Patient responded well to treatment."
+    },
+    "metadata": {
+      "created_by": "Dr Patel",
+      "validated_by": "Dr Smith"
+    }
+  }
+]

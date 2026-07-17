@@ -30,6 +30,9 @@ src/
   column_checker.py Column-level compliance checker (proof of concept)
   validate_odrl.py  rdflib validation of ODRL policy files
   create_synthetic_data.py  Generates synthetic NHS and Met Office datasets
+  create_synthetic_json.py    Generates synthetic patient records JSON
+  json_checker.py             JSON field-level compliance checker (proof of concept)
+  licence_ontology.py         Licence hierarchy with least-upper-bound reasoning
 data/              Real and synthetic datasets
 evaluation/
   baseline.py      Static baseline pipeline (no policy checking)
@@ -39,6 +42,7 @@ tests/
   test_checker.py           Unit tests for compliance checker (5 tests)
   test_planner.py           Integration tests for pipeline planner (8 tests)
   test_column_integration.py Column-level integration tests (2 tests)
+  test_json_integration.py  JSON field-level integration tests (4 tests)
 ```
 
 ---
@@ -99,6 +103,8 @@ python src/validate_odrl.py          # Validate ODRL policy files
 python src/planner.py                # Run all 7 scenarios
 python src/column_checker.py         # Column-level compliance demo
 python evaluation/run_all.py         # Full three-way evaluation
+python src/json_checker.py             # JSON field-level compliance demo
+python src/licence_ontology.py         # Licence lattice reasoning demo
 ```
 
 ### Run Tests
@@ -106,6 +112,7 @@ python evaluation/run_all.py         # Full three-way evaluation
 python tests/test_checker.py              # 5 unit tests
 python tests/test_planner.py              # 8 integration tests
 python tests/test_column_integration.py   # 2 column-level tests
+python tests/test_json_integration.py     # 4 JSON field-level tests
 ```
 
 ---
