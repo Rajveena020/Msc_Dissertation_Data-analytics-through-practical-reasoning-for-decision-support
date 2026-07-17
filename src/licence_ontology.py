@@ -1,56 +1,43 @@
 # ============================================================
 # licence_ontology.py
 # Licence Ontology with Lattice-Based Derived Licence Reasoning
-# 
-# PURPOSE:
-# Implements Julian's suggestion of a licence ontology with formal hierarchy and least-upper-bound (LUB) queries for  computing the derived
-# licence of combined datasets.
 #
-# Key insight: when the LUB query returns "unknown" (no coherent single derived licence exists), the system falls back to the column-level
+# PURPOSE:
+# Implements a licence ontology withformal hierarchy and least-upper-bound (LUB) queries for computing the derived licence of combined datasets.
+#
+# Key insight: when the LUB query returns "unknown" (no coherent single derived licence exists), the system falls  back to the column-level
 # compliance checker - connecting the two main contributions of this dissertation.
 #
-# This is a simplified proof of concept. A production version would use OWL (Web Ontology Language) with a description logic reasoner 
-# such as HermiT or Pellet.
+# This is a simplified proof of concept. A production versionwould use OWL (Web Ontology Language) with a description logic reasoner
+#  such as HermiT or Pellet.
 # ============================================================
 
-# Licence Lattice 
-# Hierarchy from least restrictive (top) to most restrictive.
+# Multi-dimensional restrictiveness structure.
 #
-#                     any_licence
-#                    /           \
-#              permissive     restrictive
-#              /    \          /       \
-#           ogl   cc_by   share_alike  non_commercial
-#                          /    \           |
-#                     cc_by_sa  odbl     cc_by_nc
+# Licences differ along multiple axes:
+#   - Attribution (all require it)
+#   - Share-alike constraint (CC-BY-SA, ODbL)
+#   - Non-commercial constraint (CC-BY-NC)
 #
-# Parent-child relationships encode: "child is at least as restrictive as parent." The least upper bound (LUB) of two licences is the most
-# specific common ancestor - i.e., the least restrictive licence that is still at least as restrictive as both inputs.
+# When two licences constrain along the SAME axis, one may subsume the other. When they constrain along DIFFERENT axes,  no coherent single
+# derived licence exists - the query returns "unknown" and the system falls back to column-level.
 
 LICENCE_HIERARCHY = {
-    "ogl":            "permissive",
-    "cc_by":          "permissive",
-    "permissive":     "any_licence",
-    "cc_by_sa":       "share_alike",
-    "odbl":           "share_alike",
-    "share_alike":    "restrictive",
-    "cc_by_nc":       "non_commercial",
-    "non_commercial": "restrictive",
-    "restrictive":    "any_licence",
-    "any_licence":    None,  # root
+    "ogl":             "any_licence",
+    "cc_by":           "ogl",
+    "cc_by_sa":        "cc_by",       # adds share-alike axis
+    "odbl":            "cc_by",       # adds database share-alike axis
+    "cc_by_nc":        "cc_by",       # adds non-commercial axis
+    "any_licence":     None,          # root
 }
 
-# Human-readable descriptions 
+# Human-readable descriptions
 LICENCE_DESCRIPTIONS = {
     "ogl":            "Open Government Licence v3.0",
     "cc_by":          "Creative Commons Attribution 4.0",
     "cc_by_sa":       "Creative Commons Attribution-ShareAlike 4.0",
     "cc_by_nc":       "Creative Commons Attribution-NonCommercial 4.0",
     "odbl":           "Open Data Commons Open Database Licence 1.0",
-    "permissive":     "(abstract) Permissive licence family",
-    "share_alike":    "(abstract) Share-alike licence family",
-    "non_commercial": "(abstract) Non-commercial licence family",
-    "restrictive":    "(abstract) Restrictive licence family",
     "any_licence":    "(abstract) Root - any licence",
 }
 
@@ -58,9 +45,12 @@ LICENCE_DESCRIPTIONS = {
 class LicenceOntology:
     """
     Licence ontology with least-upper-bound (LUB) queries.
+
     Given two licences, computes the derived licence for their combination using the formal lattice hierarchy.
+
     Returns:
-    - A concrete licence if one subsumes the other "unknown" if no coherent derived licence exists (triggers column-level fallback)
+    - A concrete licence if one subsumes the other along the same constraint axis "unknown" if the two licences add incompatible
+      constraint types (e.g. share-alike vs non-commercial), triggering column-level fallback
     """
 
     def __init__(self):
@@ -69,7 +59,7 @@ class LicenceOntology:
     def get_ancestors(self, licence):
         """
         Return the full ancestor chain from a licence to the root of the hierarchy.
-        e.g. cc_by_sa -> share_alike -> restrictive -> any_licence
+        e.g. cc_by_sa -> cc_by -> ogl -> any_licence
         """
         ancestors = []
         current = licence
@@ -77,6 +67,25 @@ class LicenceOntology:
             ancestors.append(current)
             current = self.hierarchy.get(current)
         return ancestors
+
+    def _adds_incompatible_constraints(self, licence1, licence2):
+        """
+        Check if two licences add fundamentally incompatible constraint types (share-alike vs non-commercial vs database-share-alike). 
+        When they do, no coherent single derived licence exists.
+        """
+        constraint_families = {
+            "cc_by_sa":  "share_alike_document",
+            "odbl":      "share_alike_database",
+            "cc_by_nc":  "non_commercial",
+        }
+
+        f1 = constraint_families.get(licence1)
+        f2 = constraint_families.get(licence2)
+
+        # If both have distinct constraint families, they conflict
+        if f1 and f2 and f1 != f2:
+            return True
+        return False
 
     def least_upper_bound(self, licence1, licence2):
         """
@@ -87,9 +96,9 @@ class LicenceOntology:
 
         Returns:
             {
-                "derived_licence": str or "unknown",
+                "derived_licence": str or "unknown", 
                 "is_concrete": bool (False if abstract/unknown),
-                "reasoning": str,
+                "reasoning": str, 
                 "fallback_to_column_level": bool
             }
         """
@@ -103,6 +112,21 @@ class LicenceOntology:
                     f"derived licence is {licence1}"
                 ),
                 "fallback_to_column_level": False
+            }
+
+        # Check for incompatible constraint families
+        # (share-alike vs non-commercial etc.)
+        if self._adds_incompatible_constraints(licence1, licence2):
+            return {
+                "derived_licence": "unknown",
+                "is_concrete": False,
+                "reasoning": (
+                    f"{licence1} and {licence2} add incompatible "
+                    f"constraint types (e.g. share-alike vs "
+                    f"non-commercial); no coherent single "
+                    f"derived licence exists"
+                ),
+                "fallback_to_column_level": True
             }
 
         # Get ancestor chains
@@ -143,11 +167,7 @@ class LicenceOntology:
                 lub = ancestor
                 # Check if the LUB is a concrete licence
                 # or an abstract category
-                is_abstract = lub in [
-                    "permissive", "restrictive",
-                    "share_alike", "non_commercial",
-                    "any_licence"
-                ]
+                is_abstract = lub in ["any_licence"]
 
                 if is_abstract:
                     # No concrete derived licence exists
@@ -181,7 +201,66 @@ class LicenceOntology:
             "fallback_to_column_level": True
         }
 
-# Demo 
+
+# Integration with Column-Level Checker
+# Implementation: use the ontology to compute the derived licence, and fall back to the column-level checker when the ontology returns "unknown".
+# This connects the two main contributions of the dissertation (derived licence reasoning + column-level compliance) into a single coherent
+# architecture.
+
+def derive_licence_with_fallback(
+    licence1, licence2,
+    dataset1=None, dataset2=None
+):
+    """
+    Integrated design for derived licence reasoning.
+
+    Step 1: Query the licence ontology for the least upper bound of the two input licences.
+
+    Step 2: If the ontology returns a concrete licence, return it as the derived dataset-level licence.
+
+    Step 3: If the ontology returns "unknown" (no coherent single derived licence exists), signal that the system should fall back
+     to the column-level compliance checker to salvage compliance at a finer granularity.
+
+    This makes the connection between derived licence reasoning and column-level compliance explicit and architecturally principled, 
+    rather than treating them as separate mechanisms.
+    """
+    ontology = LicenceOntology()
+    result = ontology.least_upper_bound(licence1, licence2)
+
+    if result["fallback_to_column_level"]:
+        return {
+            "approach": "column_level_required",
+            "derived_licence": None,
+            "message": (
+                f"No coherent derived licence for {licence1} + "
+                f"{licence2}. Ontology returned 'unknown'. "
+                f"Column-level checker required to salvage "
+                f"compliance at column granularity."
+            ),
+            "recommended_next_step": (
+                f"Call ColumnLevelChecker.find_compliant_columns"
+                f"({dataset1 or 'dataset1'}, "
+                f"{dataset2 or 'dataset2'})"
+            ),
+            "ontology_reasoning": result["reasoning"]
+        }
+
+    return {
+        "approach": "dataset_level",
+        "derived_licence": result["derived_licence"],
+        "message": (
+            f"Derived licence for {licence1} + {licence2} "
+            f"is {result['derived_licence']}"
+        ),
+        "recommended_next_step": (
+            f"Proceed with dataset-level pipeline using "
+            f"derived licence {result['derived_licence']}"
+        ),
+        "ontology_reasoning": result["reasoning"]
+    }
+
+
+# Demo
 if __name__ == "__main__":
     ontology = LicenceOntology()
 
@@ -219,9 +298,9 @@ if __name__ == "__main__":
         print(f"  Derived licence: {derived}")
         print(f"  Reasoning: {result['reasoning']}")
         if fallback:
-            print(f"  → FALLBACK to column-level checker")
+            print(f"  -> FALLBACK to column-level checker")
         else:
-            print(f"  → Concrete derived licence determined")
+            print(f"  -> Concrete derived licence determined")
 
     # Summary
     print(f"\n{'='*65}")
@@ -238,6 +317,37 @@ if __name__ == "__main__":
 
     print(f"  Concrete derived licence: {concrete}/{len(test_cases)}")
     print(f"  Unknown (column fallback): {unknown}/{len(test_cases)}")
-    print(f"\n  Key insight: When the ontology cannot determine a concrete derived licence, the system falls back to column-level compliance checking - connecting ")
-    print(f" the derived licence reasoning with the fine-grained column-level checker. ")
+    print(f"\n  Key insight: when the ontology cannot determine a concrete derived licence, the system falls back to column-level compliance checking - connecting the ")
+    print(f"derived licence reasoning with the fine-grained column-level checker. ")
     print(f"{'='*65}")
+
+    # Integrated Fallback Demo
+    print(f"\n{'='*65}")
+    print("INTEGRATED DEMO")
+    print("Ontology query with column-level fallback")
+    print(f"{'='*65}")
+
+    integrated_cases = [
+        ("ogl", "cc_by_sa",
+         "air_quality", "met_office_weather",
+         "Dataset-level derivation works"),
+        ("cc_by_sa", "odbl",
+         "met_office_weather", "osm_berkshire",
+         "Fallback to column-level required"),
+        ("cc_by_sa", "cc_by_nc",
+         "met_office_weather", "nhs_admissions",
+         "Incompatible constraint types"),
+    ]
+
+    for l1, l2, d1, d2, description in integrated_cases:
+        print(f"\n  {description}")
+        print(f"  Input: {d1}({l1}) + {d2}({l2})")
+
+        result = derive_licence_with_fallback(l1, l2, d1, d2)
+
+        print(f"  Approach: {result['approach']}")
+        if result["derived_licence"]:
+            print(f"  Derived licence: {result['derived_licence']}")
+        print(f"  Recommendation: {result['recommended_next_step']}")
+
+    print(f"\n{'='*65}")
