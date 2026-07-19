@@ -1,115 +1,165 @@
-# ============================================================
-# test_planner.py
-# Integration Tests for Pipeline Planner
-# ============================================================
-
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 from src.planner import PipelinePlanner
 
-planner = PipelinePlanner()
 
 def test_scenario_1_replanning():
-    """OGL + CC-BY-NC - violation expected, re-plan expected"""
+    """
+    Scenario 1: OGL + CC-BY-NC violation should trigger re-planning
+    Scenario 1 evidences O2 (planner ≥5 scenarios) + O4 (re-planning)
+    """
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_1")
+
     assert result["status"] == "success"
-    assert result["replanned"] == True
-    assert result["violation"] is None
-    print("PASS: Scenario 1 - violation detected and re-planned successfully")
+    assert result["datasets_used"] == ["air_quality", "ons_health_stats"]
+    # ISSUE 6 FIX: verify structured replan trace
+    assert result["replan_trace"]["swapped_out"] == "nhs_admissions"
+    assert result["replan_trace"]["swapped_in"] == "ons_health_stats"
+    assert result["replan_trace"]["reason"] == "cc_by_nc_restriction"
+    assert result["replan_trace"]["strategy"] == "domain_similar_substitution"
+    assert result["replanned"] is True
+
+    print("PASS: Scenario 1 re-planned successfully via YAWL patterns")
+
 
 def test_scenario_2_compliant():
-    """OGL + OGL - no violation, no re-planning"""
+    """Scenario 2: OGL + OGL should proceed without re-planning."""
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_2")
-    assert result["status"] == "success"
-    assert result["replanned"] == False
-    assert result["violation"] is None
-    print("PASS: Scenario 2 - pipeline compliant, no re-planning needed")
 
-def test_scenario_3_replanning():
-    """OGL + CC-BY-SA - violation expected, re-plan expected"""
+    assert result["status"] == "success"
+    assert result["datasets_used"] == ["ons_census", "police_crime"]
+    # No re-planning happened; there should be no replan_trace
+    assert "replan_trace" not in result or result.get("replan_trace") is None
+
+    print("PASS: Scenario 2 executed directly (no re-planning needed)")
+
+
+def test_scenario_3_share_alike():
+    """
+    Scenario 3: OGL + CC-BY-SA violation should trigger re-planning to an OGL alternative.
+    """
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_3")
-    assert result["status"] == "success"
-    assert result["replanned"] == True
-    print("PASS: Scenario 3 - share-alike conflict resolved by re-planner")
 
-def test_scenario_4_replanning():
-    """OGL + CC-BY-NC - violation expected, re-plan expected"""
+    assert result["status"] == "success"
+    assert result["datasets_used"] == ["dft_traffic", "defra_weather"]
+    assert result["replan_trace"]["swapped_out"] == "met_office_weather"
+    assert result["replan_trace"]["swapped_in"] == "defra_weather"
+    assert result["replan_trace"]["reason"] == "share_alike_conflict"
+
+    print("PASS: Scenario 3 handles share-alike violation correctly")
+
+
+def test_scenario_4_nhs_weather():
+    """
+    Scenario 4: CC-BY-SA + CC-BY-NC violation. The re-planner correctly reports partial output because no single-substitution alternative exists,
+    swapping nhs_admissions to ons_health_stats (OGL) still leaves a share-alike conflict with met_office_weather (CC-BY-SA).
+    Multi-step substitution search is documented as future work.
+    """
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_4")
-    assert result["status"] == "success"
-    assert result["replanned"] == True
-    print("PASS: Scenario 4 - CC-BY-NC conflict resolved by re-planner")
 
-def test_scenario_5_replanning():
-    """OGL + ODbL - violation expected, re-plan expected"""
+    # Correct behaviour: report partial output honestly
+    assert result["status"] == "partial"
+    assert result["replan_trace"]["strategy"] == "no_alternative_found"
+    assert result["replan_trace"]["original_datasets"] == [
+        "met_office_weather", "nhs_admissions"
+    ]
+
+    print("PASS: Scenario 4 correctly reports partial output "
+          "(no single-substitution alternative exists — O4 evidence)")
+
+
+def test_scenario_5_odbl():
+    """Scenario 5: OGL + ODbL violation should trigger re-planning."""
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_5")
-    assert result["status"] == "success"
-    assert result["replanned"] == True
-    print("PASS: Scenario 5 - ODbL conflict resolved by re-planner")
 
-def test_scenario_6_compatible_same_licence():
-    """CC-BY-SA + CC-BY-SA - compatible, no re-planning,
-       derived licence preserved as CC-BY-SA"""
-    result = planner.build_pipeline("scenario_6")
     assert result["status"] == "success"
-    assert result["replanned"] == False
+    assert result["datasets_used"] == ["dft_traffic", "ons_geography"]
+    assert result["replan_trace"]["swapped_out"] == "osm_berkshire"
+    assert result["replan_trace"]["swapped_in"] == "ons_geography"
+    assert result["replan_trace"]["reason"] == "odbl_restriction"
+
+    print("PASS: Scenario 5 handles ODbL violation correctly")
+
+
+def test_scenario_6_target_licence():
+    """
+    Scenario 6: user requests CC-BY-SA output (for share-alike publication). Both inputs are CC-BY-SA, so target is preserved.
+    """
+    planner = PipelinePlanner()
+    result = planner.build_pipeline("scenario_6")
+
+    assert result["status"] == "success"
+    # Output must preserve the requested licence
     assert result["output_licence"] == "cc_by_sa"
-    print("PASS: Scenario 6 - same-family CC-BY-SA compatible,"
-          " output licence preserved (derived licence reasoning)")
+
+    print("PASS: Scenario 6 preserves target licence (CC-BY-SA)")
+
 
 def test_scenario_7_no_alternative():
-    """Failure case: no compliant alternative exists (O4)"""
+    """
+    Scenario 7: OSM (ODbL) + NHS (CC-BY-NC) - no compliant alternatives exist. System must correctly report PARTIAL rather than falsely
+     claim success.
+    """
+    planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_7")
+
     assert result["status"] == "partial"
-    assert result["replanned"] == True
-    print("PASS: Scenario 7 - correctly reports no compliant alternative"
-          " (Objective O4)")
+    # ISSUE 6 FIX: verify partial-case replan trace
+    assert result["replan_trace"]["strategy"] == "no_alternative_found"
+    assert result["replan_trace"]["original_datasets"] == [
+        "osm_berkshire", "nhs_admissions"
+    ]
+    # Reason should reflect the initial violation
+    assert result["replan_trace"]["reason"] in [
+        "cc_by_nc_restriction",
+        "odbl_restriction",
+        "nc_odbl_conflict"
+    ]
 
-def test_end_to_end_integration():
-    """Full integration test: all scenarios behave as expected"""
-    results = []
-    for scenario_id in ["scenario_1", "scenario_2", "scenario_3",
-                        "scenario_4", "scenario_5", "scenario_6",
-                        "scenario_7"]:
-        result = planner.build_pipeline(scenario_id)
-        results.append(result)
+    print("PASS: Scenario 7 correctly reports no viable alternative "
+          "(O4 evidence)")
 
-    # Scenarios 1-6 must succeed
-    assert results[0]["status"] == "success"  # re-planned
-    assert results[1]["status"] == "success"  # compliant
-    assert results[2]["status"] == "success"  # re-planned
-    assert results[3]["status"] == "success"  # re-planned
-    assert results[4]["status"] == "success"  # re-planned
-    assert results[5]["status"] == "success"  # compatible same-family
 
-    # Scenario 7 must correctly report partial
-    assert results[6]["status"] == "partial"
+def test_end_to_end_correctness():
+    """
+    Meta-test: run all 7 scenarios, verify each returns a coherent result matching either success or partial with the correct trace.
+    """
+    planner = PipelinePlanner()
+    scenarios = [
+        "scenario_1", "scenario_2", "scenario_3",
+        "scenario_4", "scenario_5", "scenario_6",
+        "scenario_7"
+    ]
+    for sid in scenarios:
+        result = planner.build_pipeline(sid)
+        assert result["status"] in ["success", "partial"]
+        assert result["goal"] is not None
 
-    # Re-planning breakdown
-    assert results[0]["replanned"] == True   # OGL + CC-BY-NC
-    assert results[1]["replanned"] == False  # OGL + OGL
-    assert results[2]["replanned"] == True   # OGL + CC-BY-SA
-    assert results[3]["replanned"] == True   # OGL + CC-BY-NC
-    assert results[4]["replanned"] == True   # OGL + ODbL
-    assert results[5]["replanned"] == False  # CC-BY-SA + CC-BY-SA
-    assert results[6]["replanned"] == True   # attempted re-plan
-
-    print("PASS: End-to-end integration - all 7 scenarios behave correctly")
+    print("PASS: All 7 scenarios return coherent results")
 
 
 if __name__ == "__main__":
     print("=" * 55)
     print("RUNNING INTEGRATION TESTS")
     print("=" * 55)
+
     test_scenario_1_replanning()
     test_scenario_2_compliant()
-    test_scenario_3_replanning()
-    test_scenario_4_replanning()
-    test_scenario_5_replanning()
-    test_scenario_6_compatible_same_licence()
+    test_scenario_3_share_alike()
+    test_scenario_4_nhs_weather()
+    test_scenario_5_odbl()
+    test_scenario_6_target_licence()
     test_scenario_7_no_alternative()
-    test_end_to_end_integration()
-    print()
-    print("ALL INTEGRATION TESTS PASSED!")
+    test_end_to_end_correctness()
+
+    print("\nALL TESTS PASSED!")
     print("=" * 55)

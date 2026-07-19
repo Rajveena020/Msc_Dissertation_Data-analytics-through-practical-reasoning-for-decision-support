@@ -1,390 +1,385 @@
 # ============================================================
-# planner.py
-# Pipeline Planner - YAWL-grounded workflow construction
+# planner.py - Pipeline Planner with YAWL patterns
+# 
+# Includes:
+# - YAWL-grounded workflow patterns 
+# - Column-level compliance fallback (proof of concept)
+# - Structured re-planning trace
 # ============================================================
 
-import sys
+import clingo
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import sys
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+))
 
 from src.checker import PolicyChecker
 from src.column_checker import ColumnLevelChecker
 
-# Dataset Registry 
-DATASET_REGISTRY = {
-    "air_quality":        {"licence": "ogl",      "description": "DEFRA air quality monitoring data"},
-    "ons_census":         {"licence": "ogl",      "description": "ONS Census 2021 population data"},
-    "police_crime":       {"licence": "ogl",      "description": "Police.uk crime statistics"},
-    "dft_traffic":        {"licence": "ogl",      "description": "DfT road traffic statistics"},
-    "osm_berkshire":      {"licence": "odbl",     "description": "OpenStreetMap Berkshire extract"},
-    "met_office_weather": {"licence": "cc_by_sa", "description": "Met Office weather data (synthetic)"},
-    "nhs_admissions":     {"licence": "cc_by_nc", "description": "NHS hospital admissions (simulated)"},
-    "met_office_scotland":{"licence": "cc_by_sa", "description": "Met Office Scotland regional data (synthetic)"},
-    "ons_health_stats":   {"licence": "ogl",      "description": "ONS health statistics (OGL alternative)"},
-}
+from src.registries import (
+    DATASET_LICENCES,
+    DOMAIN_ALTERNATIVES,
+    LICENCE_RANK,
+    get_dataset_licence,
+)
 
-# Domain similarity mapping 
-# Maps each dataset to closest domain-similar alternatives
-# Used by XOR-split re-planner to find best alternative
-DOMAIN_ALTERNATIVES = {
-    "nhs_admissions":     ["ons_health_stats", "ons_census"],
-    "met_office_weather": ["air_quality", "ons_census"],
-    "osm_berkshire":      ["dft_traffic", "ons_census"],
-    "air_quality":        ["ons_health_stats", "ons_census"],
-    "dft_traffic":        ["ons_census", "police_crime"],
-    "ons_census":         ["police_crime", "dft_traffic"],
-    "police_crime":       ["ons_census", "dft_traffic"],
-    "ons_health_stats":   ["ons_census", "police_crime"],
-    "met_office_scotland": ["met_office_weather", "ons_census"],
-}
-# Licence Restrictiveness Ranking 
-# Used to determine the licence of the derived (output) dataset after merging. Most-restrictive-wins rule.
-LICENCE_RANK = {
-    "ogl":       1,   # Least restrictive
-    "cc_by":     2,
-    "cc_by_sa":  3,
-    "odbl":      3,
-    "cc_by_nc":  4,   # Most restrictive
-}
 
-# Query Scenarios 
-# Updated goals to match actual dataset content
+# Constraint Tracking for Re-planning 
+_REPLANNING_CONSTRAINTS = {}
+
+
+def get_constraints(scenario_id):
+    """Get accumulated constraints for a scenario"""
+    return _REPLANNING_CONSTRAINTS.get(scenario_id, [])
+
+
+def add_constraint(scenario_id, dataset):
+    """Add a dataset to the exclusion list for a scenario"""
+    if scenario_id not in _REPLANNING_CONSTRAINTS:
+        _REPLANNING_CONSTRAINTS[scenario_id] = []
+    if dataset not in _REPLANNING_CONSTRAINTS[scenario_id]:
+        _REPLANNING_CONSTRAINTS[scenario_id].append(dataset)
+
+
+def reset_constraints(scenario_id):
+    """Reset constraints for a fresh planning run"""
+    _REPLANNING_CONSTRAINTS[scenario_id] = []
+
+
+# Query Scenarios (User Analytics Goals)
 QUERY_SCENARIOS = {
     "scenario_1": {
-        "goal": "Analyse air pollution vs health outcomes by region",
-        "datasets": ["air_quality", "nhs_admissions"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Analyse effect of air quality on hospital admissions",
+        "datasets": ["air_quality", "nhs_admissions"]
     },
     "scenario_2": {
-        "goal": "Analyse crime rates by population density",
-        "datasets": ["ons_census", "police_crime"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Compare local authority census data with crime statistics",
+        "datasets": ["ons_census", "police_crime"]
     },
     "scenario_3": {
-        "goal": "Correlate population data with weather monitoring",
-        "datasets": ["ons_census", "met_office_weather"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Study relationship between weather and traffic incidents",
+        "datasets": ["dft_traffic", "met_office_weather"]
     },
     "scenario_4": {
-        "goal": "Analyse traffic patterns by demographic area",
-        "datasets": ["dft_traffic", "nhs_admissions"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Analyse hospital admissions correlated with weather patterns",
+        "datasets": ["met_office_weather", "nhs_admissions"]
     },
     "scenario_5": {
-        "goal": "Map road infrastructure against geographic data",
-        "datasets": ["ons_census", "osm_berkshire"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Study impact of geographic data on traffic patterns",
+        "datasets": ["dft_traffic", "osm_berkshire"]
     },
     "scenario_6": {
-        "goal": "Combine weather monitoring across UK regions",
-        "datasets": ["met_office_weather", "met_office_scotland"],
-        "operations": ["load", "clean", "merge", "analyse"]
+        "goal": "Analyse weather patterns for scientific publication (needs CC-BY-SA)",
+        "datasets": ["met_office_weather", "met_office_weather"],
+        "target_licence": "cc_by_sa"
     },
     "scenario_7": {
-        "goal": "Combine highly restricted datasets with no compliant alternative",
-        "datasets": ["nhs_admissions", "met_office_weather"],
-        "operations": ["load", "clean", "merge", "analyse"],
-        "excluded_by_default": ["ons_health_stats", "air_quality","ons_census", "police_crime", "dft_traffic"]
-    } 
+        "goal": "Analyse impact of geospatial data on hospital admissions",
+        "datasets": ["osm_berkshire", "nhs_admissions"]
+    }
 }
 
+
+# YAWL-Grounded Pipeline Patterns
+PIPELINE_STEPS = ["load", "clean", "merge", "analyse"]
+
 class PipelinePlanner:
-    """
-    Constructs policy-compliant analytics pipelines grounded in YAWL workflow patterns.
-
-    YAWL patterns used:
-    - Sequence: ordered pipeline steps
-    - XOR-split: alternative dataset selection on violation
-    - Cancellation: cancel remaining steps on re-plan trigger
-    """
-
-    def __init__(self, use_column_level=False):
-        self.checker = PolicyChecker()
-        self.column_checker = ColumnLevelChecker() if use_column_level else None
-        self.registry = DATASET_REGISTRY
+    def __init__(
+        self,
+        rules_path="asp/licence_rules.lp",
+        use_column_level=False
+    ):
+        self.rules_path = rules_path
+        self.checker = PolicyChecker(rules_path)
+        self.column_checker = ColumnLevelChecker()
         self.use_column_level = use_column_level
 
     def get_licence(self, dataset):
-        if dataset in self.registry:
-            return self.registry[dataset]["licence"]
-        return None
+        """Return the licence of a dataset from the shared registry."""
+        return get_dataset_licence(dataset)
 
-    def find_alternative(self, dataset, excluded, target_licence=None):
+    def derive_output_licence(self, dataset1, dataset2, target_licence=None):
         """
-        XOR-split pattern: find the closest domain-similar alternative dataset when a violation is detected.
-        If target_licence is specified, prefers alternatives with that licence. Otherwise defaults to OGL alternatives.
-
-        Priority order:
-        1. Domain-similar alternative with target licence
-        2. Domain-similar alternative with OGL
-        3. Any dataset with target licence
-        4. Any OGL dataset (fallback)
+        Determine the licence of the combined output dataset. Uses the 'most restrictive wins' rule. Return None if the combination 
+        itself is a violation.
         """
-        preferred_licence = target_licence if target_licence else "ogl"
+        l1 = self.get_licence(dataset1)
+        l2 = self.get_licence(dataset2)
 
-        # Try domain-similar with preferred licence first
-        similar = DOMAIN_ALTERNATIVES.get(dataset, [])
-        for alt in similar:
-            if alt in excluded or alt == dataset:
-                continue
-            if self.get_licence(alt) == preferred_licence:
-                return alt
-
-        # Try any dataset with preferred licence
-        for alt_name, alt_info in self.registry.items():
-            if alt_name in excluded or alt_name == dataset:
-                continue
-            if alt_info["licence"] == preferred_licence:
-                return alt_name
-
-        # Fallback: OGL if not already tried
-        if preferred_licence != "ogl":
-            for alt_name, alt_info in self.registry.items():
-                if alt_name in excluded or alt_name == dataset:
-                    continue
-                if alt_info["licence"] == "ogl":
-                    return alt_name
-
-        return None
-    
-    def derive_output_licence(self, d1, d2):
-        """
-        Determine the licence of the derived dataset after merging. Applies the most-restrictive-wins rule: the output inherits
-        the more restrictive of the two input licences.
-
-        """
-        l1 = self.get_licence(d1)
-        l2 = self.get_licence(d2)
+        # If a target licence is explicitly requested (e.g. CC-BY-SA for a share-alike publication), return that if both inputs are compatible
+        # with producing it
+        if target_licence and l1 == target_licence and l2 == target_licence:
+            return target_licence
 
         rank1 = LICENCE_RANK.get(l1, 0)
         rank2 = LICENCE_RANK.get(l2, 0)
 
-        # Most restrictive wins
-        if rank1 >= rank2:
-            return l1
-        else:
-            return l2
+        return l1 if rank1 >= rank2 else l2
 
-    def build_pipeline(self, scenario_id, excluded_datasets=None, target_licence=None):
+    def derive_output_licence_from_columns(self, d1, d2, retained_columns_d2):
         """
-        Build a policy-compliant pipeline for a given scenario.
-        Uses YAWL sequence pattern for step ordering.
-        Calls checker before each merge step.
-        If violation detected, triggers re-planning.
+        Compute the derived licence based on the RETAINED columns after column-level compliance filtering.
+
+        This addresses a critical correctness issue: when the column-level checker excludes all restricted columns of a dataset, the output
+        should NOT inherit that dataset's original licence - it should reflect the licences of the columns actually kept.
         """
-       # if excluded_datasets is None:
-        #    excluded_datasets = list(scenario.get("excluded_by_default", []))
+        # Start with d1's licence (whole dataset used)
+        licences_in_use = {self.get_licence(d1)}
 
-        scenario = QUERY_SCENARIOS[scenario_id]
-        goal = scenario["goal"]
-        datasets = list(scenario["datasets"])
-        operations = scenario["operations"]
-        
-       
+        # Add licences of retained columns from d2
+        for col in retained_columns_d2:
+            col_licence = self.column_checker.get_column_licence(d2, col)
+            if col_licence:
+                licences_in_use.add(col_licence)
 
-        if excluded_datasets is None:
-            excluded_datasets = list(
-                scenario.get("excluded_by_default", [])
-            )
+        # Find the most restrictive licence among those in use
+        most_restrictive = None
+        highest_rank = -1
+        for lic in licences_in_use:
+            rank = LICENCE_RANK.get(lic, 0)
+            if rank > highest_rank:
+                highest_rank = rank
+                most_restrictive = lic
 
-        print(f"\n{'='*60}")
-        print(f"PLANNING PIPELINE FOR: {goal}")
-        if target_licence:
-            print(f"Target output licence: {target_licence}")
-        print(f"{'='*60}")
+        return most_restrictive
 
-        pipeline_steps = []
-        violation_info = None
+    def build_pipeline(self, scenario_id, _new_datasets=None):
+        """
+        Build a pipeline plan for a scenario using YAWL patterns.
 
-        for i, operation in enumerate(operations):
-            step = {
-                "step": i + 1,
-                "operation": operation,
-                "datasets": datasets,
-                "status": None
+        Returns structured 'replan_trace'showing WHICH dataset was swapped out, WHICH was swapped in, and WHY. This makes re-planning behaviour
+        visible in the return value, not only in print output.
+
+        If a violation is detected:
+          - PRIMARY strategy: replan with domain-similar substitution
+          - FALLBACK (proof of concept): column-level compliance
+        Uses YAWL cancellation region + XOR-split.
+        """
+        # Handle re-plan case (recursion signal)
+        if _new_datasets:
+            scenario = QUERY_SCENARIOS[scenario_id.split("_replan")[0]]
+            scenario = {
+                "goal":     scenario["goal"],
+                "datasets": _new_datasets
             }
-
-            if operation == "merge" and len(datasets) >= 2:
-                d1 = datasets[0]
-                d2 = datasets[1]
-
-                if d1 in excluded_datasets or d2 in excluded_datasets:
-                    violated = d2 if d2 in excluded_datasets else d1
-                    alt = self.find_alternative(violated, excluded_datasets)
-                    if alt:
-                        if d2 in excluded_datasets:
-                            datasets = [d1, alt]
-                        else:
-                            datasets = [alt, d2]
-                        d1, d2 = datasets[0], datasets[1]
-                    else:
-                        step["status"] = "failed"
-                        step["reason"] = "No alternative dataset available"
-                        pipeline_steps.append(step)
-                        break
-
-                l1 = self.get_licence(d1)
-                l2 = self.get_licence(d2)
-
-                print(f"\nStep {i+1}: {operation.upper()}")
-                print(f"  Checking: {d1} ({l1}) + {d2} ({l2})")
-
-                # Report what the derived licence WOULD be if this went ahead
-                would_be_licence = self.derive_output_licence(d1, d2)
-                print(f"  Would-be output licence: {would_be_licence}")
-
-                result = self.checker.check(d1, l1, d2, l2)
-
-                if result["compliant"]:
-                    step["status"] = "compliant"
-                    step["datasets"] = [d1, d2]
-                    print(f"  Status: COMPLIANT ✓")
-                else:
-                    step["status"] = "violation"
-                    step["violation_type"] = result["violation_type"]
-                    step["datasets"] = [d1, d2]
-                    violation_info = result
-                    print(f"  Status: VIOLATION ✗")
-                    print(f"  Type: {result['violation_type']}")
-                    print(f"  Explanation: {result['explanation']}")
-
-                    # Column-level fallback 
-                    # Before triggering full re-plan, check if column-level compliance is possible.
-                    # This preserves more data than excluding the entire dataset.
-                   
-                    if self.use_column_level and self.column_checker:
-                        print(f"\n  Trying column-level compliance...")
-                        subset = self.column_checker.find_compliant_columns(
-                            d1, d2
-                        )
-                        if subset["safe_columns_dataset2"]:
-                            n_safe = len(subset["safe_columns_dataset2"])
-                            n_total = (
-                                n_safe +
-                                len(subset["excluded_columns_dataset2"])
-                            )
-                            print(f"  Column-level compliance possible!")
-                            print(f"  Preserving {subset['reduction_dataset2']}"
-                                  f" of {d2}")
-                            print(f"  Excluded columns: "
-                                  f"{subset['excluded_columns_dataset2']}")
-                            step["status"] = "column_level_compliant"
-                            step["datasets"] = [d1, d2]
-                            step["column_subset"] = subset
-                            pipeline_steps.append(step)
-
-                            # Continue pipeline with column-level result
-                            output_licence = self.derive_output_licence(d1, d2)
-                            print(f"\nPIPELINE STATUS: COMPLETE ✓")
-                            print(f"Column-level compliance achieved")
-                            print(f"Output dataset licence: {output_licence}")
-                            return {
-                                "status": "success",
-                                "goal": goal,
-                                "pipeline": pipeline_steps,
-                                "datasets_used": [d1, d2],
-                                "output_licence": output_licence,
-                                "replanned": False,
-                                "compliance_mode": "column_level",
-                                "column_subset": subset,
-                                "violation": None
-                            }
-
-                    # Full dataset re-plan 
-                    # No column-level fix possible: trigger full re-planning
-                    
-                    print(f"\n  Triggering re-planner...")
-                    pipeline_steps.append(step)
-                    return self.replan(
-                        scenario_id, d2,
-                        excluded_datasets, violation_info, target_licence
-                    )
-            else:
-                step["status"] = "complete"
-                print(f"\nStep {i+1}: {operation.upper()} - complete")
-
-            pipeline_steps.append(step)
-
-        # Determine derived output licence for the successful pipeline
-        if len(datasets) >= 2:
-            output_licence = self.derive_output_licence(datasets[0], datasets[1])
         else:
-            output_licence = self.get_licence(datasets[0]) if datasets else None
+            scenario = QUERY_SCENARIOS.get(scenario_id)
+            if not scenario:
+                return {"error": f"Unknown scenario: {scenario_id}"}
+            # Reset constraints for fresh pipeline run
+            if not _new_datasets:
+                reset_constraints(scenario_id)
 
-        print(f"\nPIPELINE STATUS: COMPLETE ✓")
-        print(f"All steps executed successfully")
-        print(f"Output dataset licence: {output_licence}")
+        d1, d2 = scenario["datasets"]
+        l1 = self.get_licence(d1)
+        l2 = self.get_licence(d2)
+
+        print(f"\n{'='*55}")
+        print(f"Query: {scenario['goal']}")
+        print(f"Datasets: {d1} ({l1}) + {d2} ({l2})")
+        print(f"{'='*55}")
+
+        # YAWL cancellation region: check policy before executing
+        print(f"\nPRE-PIPELINE POLICY CHECK...")
+        pre_check = self.checker.check(d1, l1, d2, l2)
+
+        if not pre_check["compliant"]:
+            print(f"CANCELLATION TRIGGERED (YAWL pattern)")
+            print(f"Violation: {pre_check['violation_type']}")
+            print(f"Reason: {pre_check['explanation']}")
+            print(f"\nRE-PLANNING (XOR-split: alternative branch)...")
+            print(f"Adding constraint: exclude {d2}")
+
+            # Add violated dataset to exclusion list
+            base_scenario_id = scenario_id.split("_replan")[0]
+            add_constraint(base_scenario_id, d2)
+
+            # Try re-planning (PRIMARY STRATEGY)
+            result = self.replan(d1, d2, pre_check, base_scenario_id)
+
+            if result["status"] == "success":
+                print(f"Alternative found: {result['alternative']}")
+                # Continue with alternative dataset
+                final_result = self.build_pipeline(
+                    scenario_id + "_replan",
+                    _new_datasets=result["new_datasets"]
+                )
+               
+                final_result["replan_trace"] = {
+                    "original_datasets": [d1, d2],
+                    "swapped_out":       d2,
+                    "swapped_in":        result["alternative"],
+                    "reason":            pre_check["violation_type"],
+                    "explanation":       pre_check["explanation"],
+                    "strategy":          "domain_similar_substitution"
+                }
+                final_result["replanned"] = True
+                return final_result
+            else:
+                # PRIMARY strategy failed - try FALLBACK (column-level)
+                if self.use_column_level:
+                    print(f"\nDataset-level re-planning failed.")
+                    print(f"FALLBACK to column-level compliance "
+                          f"(proof of concept)")
+
+                    col_result = self.column_checker.find_compliant_columns(
+                        d1, d2
+                    )
+
+                    if col_result["safe_columns_dataset2"]:
+                        print(f"\nColumn-level compliance identified:")
+                        print(f"  Preserved from {d2}: "
+                              f"{col_result['reduction_dataset2']}")
+                        print(f"  Excluded columns: "
+                              f"{col_result['excluded_columns_dataset2']}")
+
+                        # Continue pipeline with column-level result
+                        
+                        output_licence = self.derive_output_licence_from_columns(
+                            d1, d2, col_result["safe_columns_dataset2"]
+                        )
+                        print(f"\nPIPELINE STATUS: COMPLETE ✓")
+                        print(f"Column-level compliance achieved")
+                        print(f"Output dataset licence: {output_licence} "
+                              f"(derived from retained columns)")
+
+                        return {
+                            "status":           "success",
+                            "compliance_mode":  "column_level",
+                            "column_subset":    col_result,
+                            "output_licence":   output_licence,
+                            "datasets_used":    [d1, d2],
+                            "goal":             scenario["goal"],
+                            "yawl_pattern_used":
+                                "cancellation-region-with-column-fallback",
+                            
+                            "replan_trace": {
+                                "original_datasets": [d1, d2],
+                                "swapped_out":       None,
+                                "swapped_in":        None,
+                                "reason":            pre_check["violation_type"],
+                                "explanation":       pre_check["explanation"],
+                                "strategy":          "column_level_fallback",
+                                "columns_preserved":
+                                    col_result["safe_columns_dataset2"],
+                                "columns_excluded":
+                                    col_result["excluded_columns_dataset2"]
+                            }
+                        }
+                    else:
+                        print(f"\nColumn-level fallback also failed")
+
+                # No re-planning strategy worked
+                print(f"\nPIPELINE STATUS: PARTIAL")
+                print(f"Reason: {result['reason']}")
+                return {
+                    "status":            "partial",
+                    "goal":              scenario["goal"],
+                    "reason":            result["reason"],
+                    "cancellation_from": [d1, d2],
+                    "yawl_pattern_used": "cancellation-region",
+                   
+                    "replan_trace": {
+                        "original_datasets": [d1, d2],
+                        "swapped_out":       None,
+                        "swapped_in":        None,
+                        "reason":            pre_check["violation_type"],
+                        "explanation":       pre_check["explanation"],
+                        "strategy":          "no_alternative_found"
+                    }
+                }
+
+        # No violation - execute pipeline in sequence
+        return self._execute_pipeline(d1, d2, scenario)
+
+    def _execute_pipeline(self, d1, d2, scenario):
+        """
+        Execute the pipeline (YAWL: sequence pattern). This is only reached if the policy check passed.
+        """
+        print(f"\nPOLICY CHECK PASSED - EXECUTING PIPELINE")
+        print(f"YAWL Pattern: SEQUENCE")
+
+        target_licence = scenario.get("target_licence")
+
+        for step in PIPELINE_STEPS:
+            print(f"  {step.upper()}: {d1} + {d2}... COMPLETE")
+
+        output_licence = self.derive_output_licence(d1, d2, target_licence)
+        print(f"\nPIPELINE STATUS: COMPLETE")
+        print(f"Compliance verified via ODRL 2.2 policies")
+        print(f"Output dataset licence: {output_licence} ")
+
         return {
-            "status": "success",
-            "goal": goal,
-            "pipeline": pipeline_steps,
-            "datasets_used": datasets,
-            "output_licence": output_licence,
-            "replanned": len(excluded_datasets) > 0,
-            "violation": None
-
+            "status":          "success",
+            "compliance_mode": "dataset_level",
+            "output_licence":  output_licence,
+            "target_licence":  target_licence,
+            "datasets_used":   [d1, d2],
+            "goal":            scenario["goal"],
+            "yawl_pattern_used": "sequence"
         }
 
-    def replan(self, scenario_id, violated_dataset, excluded_datasets, violation_info, target_licence=None):
+    def replan(self, d1, d2, violation, scenario_id):
         """
-        Re-planning: run planner again with violated constraint as new condition.
-        Finds closest achievable domain-similar alternative.
-        Prevents d1==d2 degenerate merging.
+        Try to find an alternative for the violated dataset. 
+        YAWL Pattern: XOR-split (choose one alternative) 
+        With re-planning: constraint accumulation
+        Returns structured info about the alternative found.
         """
-        print(f"\n{'-'*60}")
-        print(f"RE-PLANNING...")
-        print(f"Excluding: {violated_dataset}")
-        print(f"Reason: {violation_info['violation_type']}")
-        print(f"{'-'*60}")
+        # Get accumulated constraints for this scenario
+        accumulated_constraints = get_constraints(scenario_id)
+        print(f"Accumulated constraints for {scenario_id}: "
+              f"exclude {accumulated_constraints}")
 
-        new_excluded = excluded_datasets + [violated_dataset]
+        # Try alternatives for d2 (excluding all accumulated)
+        alternatives = DOMAIN_ALTERNATIVES.get(d2, [])
 
-        # Get the non-violated dataset in the original pair
-        scenario = QUERY_SCENARIOS[scenario_id]
-        original_datasets = scenario["datasets"]
-        other_dataset = [d for d in original_datasets
-                         if d != violated_dataset][0]
+        for alt in alternatives:
+            # Skip if this alternative is in the exclusion list
+            if alt in accumulated_constraints:
+                print(f"Skipping {alt} (already excluded)")
+                continue
 
-        # Find alternative - must be different from other_dataset
-        alt_dataset = self.find_alternative(violated_dataset, new_excluded, target_licence)
+            print(f"Testing alternative: {alt}")
+            alt_licence = self.get_licence(alt)
+            alt_check = self.checker.check(d1, self.get_licence(d1),
+                                           alt, alt_licence)
 
-        # Fix d1==d2 problem: if alternative is same as other dataset
-        # search again excluding other_dataset as well
-        if alt_dataset and alt_dataset == other_dataset:
-            print(f"  Alternative matches existing dataset - searching further...")
-            extended_excluded = new_excluded + [other_dataset]
-            alt_dataset = self.find_alternative(
-                violated_dataset, extended_excluded, target_licence
-            )
+            if alt_check["compliant"]:
+                return {
+                    "status":         "success",
+                    "alternative":    alt,
+                    "new_datasets":   [d1, alt],
+                    "alt_licence":    alt_licence,
+                }
+            else:
+                # Constraint accumulation: add THIS failure too
+                add_constraint(scenario_id, alt)
+                print(f"  Failed: {alt_check['violation_type']}")
 
-        if alt_dataset:
-            # Report what the derived licence will now be after re-plan
-            new_derived = self.derive_output_licence(other_dataset, alt_dataset)
-            print(f"Alternative found: {alt_dataset} "
-                  f"({self.get_licence(alt_dataset)})")
-            print(f"Re-planned output licence: {new_derived}")
-            return self.build_pipeline(scenario_id, new_excluded, target_licence)
-        else:
-            print(f"No valid alternative found.")
-            print(f"Closest achievable: pipeline with available OGL datasets")
-            return {
-                "status": "partial",
-                "goal": QUERY_SCENARIOS[scenario_id]["goal"],
-                "pipeline": [],
-                "datasets_used": [],
-                "replanned": True,
-                "violation": violation_info,
-                "message": "Original goal unreachable - no compliant alternative found"
-            }
+        return {
+            "status": "failed",
+            "reason": "No compliant alternative found for {d2}",
+            "constraints_tried": get_constraints(scenario_id)
+        }
 
 
-# Run all 5 scenarios 
+# Demo 
 if __name__ == "__main__":
+    print("=" * 65)
+    print("PIPELINE PLANNER DEMO")
+    print("=" * 65)
+
     planner = PipelinePlanner()
 
-    for scenario_id in QUERY_SCENARIOS:
+    for scenario_id in QUERY_SCENARIOS.keys():
         result = planner.build_pipeline(scenario_id)
-        print(f"\nFINAL RESULT: {result['status'].upper()}")
-        if result.get("replanned"):
-            print(f"Re-planning was triggered")
-        print(f"{'='*60}\n")
+        print(f"\nResult: {result['status']}")
+        if result.get("replan_trace"):
+            trace = result["replan_trace"]
+            if trace["swapped_out"]:
+                print(f"  Swapped: {trace['swapped_out']} -> "
+                      f"{trace['swapped_in']}")
+                print(f"  Reason: {trace['reason']}")
+            print(f"  Strategy: {trace['strategy']}")

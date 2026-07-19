@@ -1,8 +1,8 @@
 scenario,goal,ds_status,ds_licence_correct,ds_replanned,ds_data_loss,ds_output_licence,ds_time_seconds,col_status,col_licence_correct,col_compliance_mode,col_data_preserved,col_output_licence,col_time_seconds,baseline_licence_correct,baseline_undetected,baseline_time_seconds
-scenario_1,Analyse air pollution vs health outcomes by region,success,True,True,100% of violated dataset excluded,ogl,0.0139,success,True,column_level,5/8,cc_by_nc,0.3721,False,cc_by_nc_restriction,0.0011
-scenario_2,Analyse crime rates by population density,success,True,False,None (compliant),ogl,0.0031,success,True,dataset_level,N/A (re-planned),ogl,0.0039,True,,0.0043
-scenario_3,Correlate population data with weather monitoring,success,True,True,100% of violated dataset excluded,ogl,0.0122,success,True,column_level,3/9,cc_by_sa,0.544,False,share_alike_conflict,0.0011
-scenario_4,Analyse traffic patterns by demographic area,success,True,True,100% of violated dataset excluded,ogl,0.0119,success,True,column_level,5/8,cc_by_nc,0.3411,False,cc_by_nc_restriction,0.001
-scenario_5,Map road infrastructure against geographic data,success,True,True,100% of violated dataset excluded,ogl,0.0099,success,True,dataset_level,N/A (re-planned),ogl,0.2101,False,odbl_restriction,0.001
-scenario_6,Combine weather monitoring across UK regions,success,True,False,None (compliant),cc_by_sa,0.0082,success,True,dataset_level,N/A (re-planned),cc_by_sa,0.0045,True,,0.0004
-scenario_7,Combine highly restricted datasets with no compliant alternative,partial,True,True,100% of violated dataset excluded,N/A,0.0046,partial,True,dataset_level,N/A (re-planned),N/A,0.9216,False,nc_sa_conflict,0.0014
+scenario_1,Analyse effect of air quality on hospital admissions,success,True,True,100% of violated dataset excluded,ogl,0.0177,success,True,dataset_level,N/A (re-planned),ogl,0.0175,False,cc_by_nc_restriction,0.0016
+scenario_2,Compare local authority census data with crime statistics,success,True,False,None (compliant),ogl,0.0059,success,True,dataset_level,N/A (re-planned),ogl,0.0063,True,,0.0012
+scenario_3,Study relationship between weather and traffic incidents,success,True,True,100% of violated dataset excluded,ogl,0.0159,success,True,dataset_level,N/A (re-planned),ogl,0.0161,False,share_alike_conflict,0.0016
+scenario_4,Analyse hospital admissions correlated with weather patterns,partial,True,False,None (compliant),N/A,0.0105,partial,True,dataset_level,N/A (re-planned),N/A,1.1565,False,cc_by_nc_restriction,0.0012
+scenario_5,Study impact of geographic data on traffic patterns,success,True,True,100% of violated dataset excluded,ogl,0.0145,success,True,dataset_level,N/A (re-planned),ogl,0.0142,False,odbl_restriction,0.0012
+scenario_6,Analyse weather patterns for scientific publication (needs CC-BY-SA),success,True,False,None (compliant),cc_by_sa,0.0051,success,True,dataset_level,N/A (re-planned),cc_by_sa,0.0051,True,,0.0012
+scenario_7,Analyse impact of geospatial data on hospital admissions,partial,True,False,None (compliant),N/A,0.0093,success,True,column_level,8/8,cc_by_nc,0.0097,False,nc_sa_conflict,0.0014
