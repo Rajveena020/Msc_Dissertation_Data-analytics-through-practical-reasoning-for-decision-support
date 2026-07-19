@@ -9,22 +9,52 @@ from src.planner import PipelinePlanner
 
 def test_scenario_1_replanning():
     """
-    Scenario 1: OGL + CC-BY-NC violation should trigger re-planning
-    Scenario 1 evidences O2 (planner ≥5 scenarios) + O4 (re-planning)
+    Scenario 1: OGL + CC-BY-NC violation.
+    
+    With use_column_level=False, the system uses dataset-level substitution. With use_column_level=True (the intended primary strategy), 
+    column-level compliance succeeds by preserving the 5 OGL columns of nhs_admissions and excluding the 3 CC-BY-NC clinical columns.
+    This test verifies dataset-level substitution as fallback.
     """
-    planner = PipelinePlanner()
+    planner = PipelinePlanner(use_column_level=False)
     result = planner.build_pipeline("scenario_1")
 
     assert result["status"] == "success"
     assert result["datasets_used"] == ["air_quality", "ons_health_stats"]
-    # ISSUE 6 FIX: verify structured replan trace
     assert result["replan_trace"]["swapped_out"] == "nhs_admissions"
     assert result["replan_trace"]["swapped_in"] == "ons_health_stats"
     assert result["replan_trace"]["reason"] == "cc_by_nc_restriction"
     assert result["replan_trace"]["strategy"] == "domain_similar_substitution"
     assert result["replanned"] is True
 
-    print("PASS: Scenario 1 re-planned successfully via YAWL patterns")
+    print("PASS: Scenario 1 dataset-level substitution works "
+          "(fallback when column-level disabled)")
+
+
+def test_scenario_1_column_level_primary():
+    """
+    Scenario 1 with column-level as primary strategy.
+    Expected: preserves 5/8 columns of nhs_admissions, excludes the 3 CC-BY-NC clinical columns, keeps original datasets.
+    """
+    planner = PipelinePlanner(use_column_level=True)
+    result = planner.build_pipeline("scenario_1")
+
+    assert result["status"] == "success"
+    assert result["compliance_mode"] == "column_level"
+    assert result["datasets_used"] == ["air_quality", "nhs_admissions"]
+    assert result["replan_trace"]["strategy"] == "column_level_primary"
+    
+    # Verify data preservation matches the headline claim
+    preserved = result["replan_trace"]["columns_preserved"]
+    excluded = result["replan_trace"]["columns_excluded"]
+    assert len(preserved) == 5  # 5 OGL columns retained
+    assert len(excluded) == 3   # 3 CC-BY-NC columns excluded
+    
+    # Verify the specific clinical columns are the ones excluded
+    assert "diagnosis_code" in excluded
+    assert "length_of_stay" in excluded
+    assert "age_group" in excluded
+
+    print("PASS: Scenario 1 column-level primary preserves 5/8 columns")
 
 
 def test_scenario_2_compliant():
@@ -42,9 +72,10 @@ def test_scenario_2_compliant():
 
 def test_scenario_3_share_alike():
     """
-    Scenario 3: OGL + CC-BY-SA violation should trigger re-planning to an OGL alternative.
+    Scenario 3: OGL + CC-BY-SA violation.
+    With use_column_level=False, uses dataset-level substitution.
     """
-    planner = PipelinePlanner()
+    planner = PipelinePlanner(use_column_level=False)
     result = planner.build_pipeline("scenario_3")
 
     assert result["status"] == "success"
@@ -53,7 +84,7 @@ def test_scenario_3_share_alike():
     assert result["replan_trace"]["swapped_in"] == "defra_weather"
     assert result["replan_trace"]["reason"] == "share_alike_conflict"
 
-    print("PASS: Scenario 3 handles share-alike violation correctly")
+    print("PASS: Scenario 3 dataset-level substitution works")
 
 
 def test_scenario_4_nhs_weather():

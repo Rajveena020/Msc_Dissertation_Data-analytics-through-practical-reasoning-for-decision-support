@@ -148,13 +148,9 @@ class PipelinePlanner:
         """
         Build a pipeline plan for a scenario using YAWL patterns.
 
-        Returns structured 'replan_trace'showing WHICH dataset was swapped out, WHICH was swapped in, and WHY. This makes re-planning behaviour
-        visible in the return value, not only in print output.
-
-        If a violation is detected:
-          - PRIMARY strategy: replan with domain-similar substitution
-          - FALLBACK (proof of concept): column-level compliance
-        Uses YAWL cancellation region + XOR-split.
+        When use_column_level=True, column-level compliance is tried FIRST as the PRIMARY  strategy for preserving data.
+        Dataset-level substitution is used as a fallback only when column-level fails to find a compatible subset.
+        This restores the intended narrative of the column-level checker as the principal contribution rather than a rarely-triggered fallback.        
         """
         # Handle re-plan case (recursion signal)
         if _new_datasets:
@@ -188,14 +184,84 @@ class PipelinePlanner:
             print(f"CANCELLATION TRIGGERED (YAWL pattern)")
             print(f"Violation: {pre_check['violation_type']}")
             print(f"Reason: {pre_check['explanation']}")
-            print(f"\nRE-PLANNING (XOR-split: alternative branch)...")
+
+            base_scenario_id = scenario_id.split("_replan")[0]
+
+        
+            if self.use_column_level:
+                print(f"\nATTEMPTING COLUMN-LEVEL COMPLIANCE "
+                      f"(primary strategy)...")
+
+                col_result = self.column_checker.find_compliant_columns(
+                    d1, d2
+                )
+
+                # Column-level succeeds if we retain at least one column from each dataset
+               
+                safe_d1 = col_result.get("safe_columns_dataset1", [])
+                safe_d2 = col_result.get("safe_columns_dataset2", [])
+                
+                if safe_d1 and safe_d2:
+                    # Verify: check that the retained subset is actually compliant (not vacuously so)
+                
+                    verification = self.column_checker.check_columns(
+                        d1, safe_d1, d2, safe_d2
+                    )
+                    
+                    if verification["compliant"] and \
+                       verification["total_pairs_checked"] > 0:
+                        print(f"\nColumn-level compliance identified:")
+                        print(f"  Preserved from {d1}: "
+                              f"{col_result['reduction_dataset1']}")
+                        print(f"  Preserved from {d2}: "
+                              f"{col_result['reduction_dataset2']}")
+
+                        # Derive output licence from retained columns
+                        output_licence = \
+                            self.derive_output_licence_from_columns(
+                                d1, d2, safe_d2
+                            )
+                        print(f"\nPIPELINE STATUS: COMPLETE ✓")
+                        print(f"Column-level compliance achieved")
+                        print(f"Output dataset licence: "
+                              f"{output_licence} "
+                              f"(derived from retained columns)")
+
+                        return {
+                            "status":           "success",
+                            "compliance_mode":  "column_level",
+                            "column_subset":    col_result,
+                            "output_licence":   output_licence,
+                            "datasets_used":    [d1, d2],
+                            "goal":             scenario["goal"],
+                            "yawl_pattern_used":
+                                "cancellation-region-with-column-primary",
+                            "replan_trace": {
+                                "original_datasets": [d1, d2],
+                                "swapped_out":       None,
+                                "swapped_in":        None,
+                                "reason":            pre_check["violation_type"],
+                                "explanation":       pre_check["explanation"],
+                                "strategy":          "column_level_primary",
+                                "columns_preserved":
+                                    safe_d2,
+                                "columns_excluded":
+                                    col_result["excluded_columns_dataset2"]
+                            }
+                        }
+                
+                print(f"Column-level compliance could not "
+                      f"preserve a compatible subset")
+
+            # ================================================
+            # FALLBACK STRATEGY: dataset-level substitution
+            # (used when column-level unavailable or fails)
+            # ================================================
+            print(f"\nATTEMPTING DATASET-LEVEL SUBSTITUTION "
+                  f"(fallback strategy)...")
             print(f"Adding constraint: exclude {d2}")
 
-            # Add violated dataset to exclusion list
-            base_scenario_id = scenario_id.split("_replan")[0]
             add_constraint(base_scenario_id, d2)
-
-            # Try re-planning (PRIMARY STRATEGY)
             result = self.replan(d1, d2, pre_check, base_scenario_id)
 
             if result["status"] == "success":
@@ -205,7 +271,6 @@ class PipelinePlanner:
                     scenario_id + "_replan",
                     _new_datasets=result["new_datasets"]
                 )
-               
                 final_result["replan_trace"] = {
                     "original_datasets": [d1, d2],
                     "swapped_out":       d2,
@@ -217,60 +282,7 @@ class PipelinePlanner:
                 final_result["replanned"] = True
                 return final_result
             else:
-                # PRIMARY strategy failed - try FALLBACK (column-level)
-                if self.use_column_level:
-                    print(f"\nDataset-level re-planning failed.")
-                    print(f"FALLBACK to column-level compliance "
-                          f"(proof of concept)")
-
-                    col_result = self.column_checker.find_compliant_columns(
-                        d1, d2
-                    )
-
-                    if col_result["safe_columns_dataset2"]:
-                        print(f"\nColumn-level compliance identified:")
-                        print(f"  Preserved from {d2}: "
-                              f"{col_result['reduction_dataset2']}")
-                        print(f"  Excluded columns: "
-                              f"{col_result['excluded_columns_dataset2']}")
-
-                        # Continue pipeline with column-level result
-                        
-                        output_licence = self.derive_output_licence_from_columns(
-                            d1, d2, col_result["safe_columns_dataset2"]
-                        )
-                        print(f"\nPIPELINE STATUS: COMPLETE ✓")
-                        print(f"Column-level compliance achieved")
-                        print(f"Output dataset licence: {output_licence} "
-                              f"(derived from retained columns)")
-
-                        return {
-                            "status":           "success",
-                            "compliance_mode":  "column_level",
-                            "column_subset":    col_result,
-                            "output_licence":   output_licence,
-                            "datasets_used":    [d1, d2],
-                            "goal":             scenario["goal"],
-                            "yawl_pattern_used":
-                                "cancellation-region-with-column-fallback",
-                            
-                            "replan_trace": {
-                                "original_datasets": [d1, d2],
-                                "swapped_out":       None,
-                                "swapped_in":        None,
-                                "reason":            pre_check["violation_type"],
-                                "explanation":       pre_check["explanation"],
-                                "strategy":          "column_level_fallback",
-                                "columns_preserved":
-                                    col_result["safe_columns_dataset2"],
-                                "columns_excluded":
-                                    col_result["excluded_columns_dataset2"]
-                            }
-                        }
-                    else:
-                        print(f"\nColumn-level fallback also failed")
-
-                # No re-planning strategy worked
+                # Both strategies failed
                 print(f"\nPIPELINE STATUS: PARTIAL")
                 print(f"Reason: {result['reason']}")
                 return {
@@ -279,7 +291,6 @@ class PipelinePlanner:
                     "reason":            result["reason"],
                     "cancellation_from": [d1, d2],
                     "yawl_pattern_used": "cancellation-region",
-                   
                     "replan_trace": {
                         "original_datasets": [d1, d2],
                         "swapped_out":       None,

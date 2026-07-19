@@ -39,8 +39,14 @@ DATASET_LICENCES = {
 # Column-level licence registry 
 # Maps each dataset to a dict of column -> licence, capturing the reality that many real datasets carry mixed licences at the column level
 # even when the dataset as a whole is published under one licence.
+#
+# Two categories of dataset:
+#   - MIXED: administrative columns are OGL but sensitive columns carry a restrictive licence
+#   - UNIFORM: all columns carry the same licence as the dataset itself
+#
 
 COLUMN_REGISTRY = {
+    # MIXED datasets
     "air_quality": {
         "date":     "ogl",
         "pm10":     "ogl",
@@ -49,18 +55,22 @@ COLUMN_REGISTRY = {
         "region":   "ogl",
         "station":  "ogl",
     },
+
     "nhs_admissions": {
+        # Administrative columns
         "admission_id":       "ogl",
         "hospital_code":      "ogl",
         "admission_date":     "ogl",
         "region":             "ogl",
         "admission_type":     "ogl",
-        # Clinical fields are more restricted
+        # Clinical columns are more restricted (CC-BY-NC)
         "diagnosis_code":     "cc_by_nc",
         "length_of_stay":     "cc_by_nc",
         "age_group":          "cc_by_nc",
     },
+
     "met_office_weather": {
+        # Administrative columns
         "date":         "ogl",
         "station":      "ogl",
         "region":       "ogl",
@@ -71,6 +81,70 @@ COLUMN_REGISTRY = {
         "humidity":     "cc_by_sa",
         "pressure":     "cc_by_sa",
         "visibility":   "cc_by_sa",
+    },
+
+    # UNIFORM datasets (all columns same licence) 
+    "ons_census": {
+        "record_id":       "ogl",
+        "region":          "ogl",
+        "population":      "ogl",
+        "age_bracket":     "ogl",
+        "household_size":  "ogl",
+    },
+
+    "police_crime": {
+        "crime_id":     "ogl",
+        "date":         "ogl",
+        "region":       "ogl",
+        "crime_type":   "ogl",
+        "outcome":      "ogl",
+    },
+
+    "dft_traffic": {
+        "record_id":       "ogl",
+        "date":            "ogl",
+        "road_type":       "ogl",
+        "region":          "ogl",
+        "vehicle_count":   "ogl",
+        "average_speed":   "ogl",
+    },
+
+    "osm_berkshire": {
+        "osm_id":       "odbl",
+        "way_type":     "odbl",
+        "geometry":     "odbl",
+        "tags":         "odbl",
+        "region":       "odbl",
+    },
+
+    "ons_health_stats": {
+        "region":              "ogl",
+        "hospital_code":       "ogl",
+        "admission_count":     "ogl",
+        "diagnosis_category":  "ogl",
+        "age_group":           "ogl",
+    },
+
+    "defra_weather": {
+        "date":         "ogl",
+        "station":      "ogl",
+        "region":       "ogl",
+        "temp_c":       "ogl",
+        "rainfall_mm":  "ogl",
+    },
+
+    "ons_geography": {
+        "region":       "ogl",
+        "boundary":     "ogl",
+        "area_km2":     "ogl",
+        "postcode":     "ogl",
+    },
+
+    "ons_crime_stats": {
+        "region":       "ogl",
+        "period":       "ogl",
+        "crime_type":   "ogl",
+        "count":        "ogl",
     },
 }
 
