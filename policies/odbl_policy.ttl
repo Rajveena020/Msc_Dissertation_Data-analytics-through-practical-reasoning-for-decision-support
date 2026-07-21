@@ -1,55 +1,41 @@
 @prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix dc: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . 
-@prefix ex: <http://example.org/policy/> .
+@prefix dc:   <http://purl.org/dc/terms/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.org/policy/> .
 
-# =======================================================================================
-# Cross-reference: rdflicense ODbL encoding at:http://purl.org/NET/rdflicense/ODbL1.0
-# rdflicense dataset confirmed to include Open Data Commons licences including ODbL
-# This encoding aligns with rdflicense structure but uses ODRL 2.2 vocabulary throughout
-# =======================================================================================
+# =======================================================================================================================================
+# Cross-reference: rdflicense ODbL encoding at http://purl.org/NET/rdflicense/ODbL1.0 ODbL imposes two obligations on derived 
+# databases: share-alike (any derived database must use ODbL) and keep-open (any derived database must remain publicly accessible). 
+# Both are encoded here as ODRL 2.2 duties attached to the distribution permission, using the standard odrl:shareAlike action and one
+# Profile-style duty (odrl:keepOpen) which the ODRL Common Vocabulary does not define.
+# =======================================================================================================================================
 
 ex:ODbL_Policy a odrl:Policy ;
     dc:title "Open Data Commons Open Database Licence v1.0" ;
-    dc:description "ODbL - permits use of database with share-alike and open access requirements" ;
+    dc:description "ODbL - permits use of database with share-alike and open-access requirements" ;
     odrl:permission [
         a odrl:Permission ;
         odrl:action odrl:reproduce ;
         odrl:action odrl:distribute ;
         odrl:action odrl:modify ;
+        odrl:action odrl:derive ;
         odrl:action odrl:commercialize ;
-        odrl:constraint [
-            a odrl:Constraint ;
-            odrl:leftOperand odrl:relicensing ;
-            odrl:operator odrl:isA ;
-            odrl:rightOperand odrl:shareAlike ;
-            dc:description "Any derived database must be published under ODbL"
-        ] ;
         odrl:duty [
             a odrl:Duty ;
             odrl:action odrl:attribute ;
             dc:description "Must attribute OpenStreetMap contributors"
-        ]
-    ] ;
-    odrl:prohibition [
-        a odrl:Prohibition ;
-        odrl:action odrl:distribute ;
-        odrl:constraint [
-            a odrl:Constraint ;
-            odrl:leftOperand odrl:relicensing ;
-            odrl:operator odrl:isNotA ;
-            odrl:rightOperand odrl:shareAlike ;
-            dc:description "Cannot distribute derived database under a closed or restrictive licence"
-        ]
-    ] ;
-    odrl:prohibition [
-        a odrl:Prohibition ;
-        odrl:action odrl:distribute ;
-        odrl:constraint [
-            a odrl:Constraint ;
-            odrl:leftOperand odrl:accessibility ;
-            odrl:operator odrl:isA ;
-            odrl:rightOperand odrl:closed ;
-            dc:description "Derived database must remain publicly accessible"
+        ] ;
+        odrl:duty [
+            a odrl:Duty ;
+            odrl:action odrl:shareAlike ;
+            dc:description "Any derived database must be published under ODbL"
+        ] ;
+        odrl:duty [
+            a ex:KeepOpenDuty ;
+            odrl:action ex:keepOpen ;
+            dc:description "Any derived database must remain publicly accessible (Profile-style extension; ODRL 2.2 Common Vocabulary does not define an accessibility action)"
         ]
     ] .
+
+ex:keepOpen a odrl:Action ;
+    dc:description "Profile-style action indicating the derived database must remain publicly accessible." .
