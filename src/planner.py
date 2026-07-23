@@ -101,39 +101,77 @@ class PipelinePlanner:
 
     def derive_output_licence(self, dataset1, dataset2, target_licence=None):
         """
-        Determine the licence of the combined output dataset. Uses the 'most restrictive wins' rule. Return None if the combination 
-        itself is a violation.
+        Determine the licence of the combined output dataset.
+
+        Resolution order:
+          1. If a target_licence is specified and both inputs are compatible with producing it, return the target.
+          2. Otherwise, query the licence ontology for the least upper bound. If concrete, use it.
+          3. Otherwise, fall back to the linear LICENCE_RANK (most-restrictive-wins).
+
+        Returns None if either input licence is missing from the registry.
         """
         l1 = self.get_licence(dataset1)
         l2 = self.get_licence(dataset2)
 
-        # If a target licence is explicitly requested (e.g. CC-BY-SA for a share-alike publication), return that if both inputs are compatible
-        # with producing it
+        if l1 is None or l2 is None:
+            return None
+
+        # Step 1: honour target_licence when both inputs match it.
         if target_licence and l1 == target_licence and l2 == target_licence:
             return target_licence
 
+        # Step 2: query the ontology for the derived licence.
+        from src.licence_ontology import LicenceOntology
+        ontology = LicenceOntology()
+        lub_result = ontology.least_upper_bound(l1, l2)
+        if lub_result["is_concrete"]:
+            return lub_result["derived_licence"]
+
+        # Step 3: ontology returned "unknown" - fall back to linear ranking.
         rank1 = LICENCE_RANK.get(l1, 0)
         rank2 = LICENCE_RANK.get(l2, 0)
-
         return l1 if rank1 >= rank2 else l2
 
-    def derive_output_licence_from_columns(self, d1, d2, retained_columns_d2):
+    def derive_output_licence_from_columns(
+        self, d1, d2, retained_columns_d1, retained_columns_d2
+    ):
         """
-        Compute the derived licence based on the RETAINED columns after column-level compliance filtering.
+        Compute the derived licence based on the RETAINED columns after column-level compliance filtering. With bidirectional shrinking,
+        both datasets may have subsets of columns retained rather than being used whole; the licences of the retained columns from both
+        datasets determine the output licence.
 
-        This addresses a critical correctness issue: when the column-level checker excludes all restricted columns of a dataset, the output
-        should NOT inherit that dataset's original licence - it should reflect the licences of the columns actually kept.
+        Resolution order (parallel to derive_output_licence):
+          1. Query the licence ontology for the LUB over the set of licences represented in the retained columns.
+          2. If the ontology returns concrete, use it.
+          3. Otherwise, fall back to LICENCE_RANK (most-restrictive-wins).
         """
-        # Start with d1's licence (whole dataset used)
-        licences_in_use = {self.get_licence(d1)}
+        # Collect licences in use from the retained columns of BOTH datasets.
+        licences_in_use = set()
 
-        # Add licences of retained columns from d2
+        for col in retained_columns_d1:
+            col_licence = self.column_checker.get_column_licence(d1, col)
+            if col_licence:
+                licences_in_use.add(col_licence)
+
         for col in retained_columns_d2:
             col_licence = self.column_checker.get_column_licence(d2, col)
             if col_licence:
                 licences_in_use.add(col_licence)
 
-        # Find the most restrictive licence among those in use
+        # Trivial case: one licence in use.
+        if len(licences_in_use) == 1:
+            return next(iter(licences_in_use))
+
+        # Two licences - query the ontology.
+        if len(licences_in_use) == 2:
+            from src.licence_ontology import LicenceOntology
+            ontology = LicenceOntology()
+            l1, l2 = list(licences_in_use)
+            lub_result = ontology.least_upper_bound(l1, l2)
+            if lub_result["is_concrete"]:
+                return lub_result["derived_licence"]
+
+        # Fallback: most-restrictive-wins via LICENCE_RANK.
         most_restrictive = None
         highest_rank = -1
         for lic in licences_in_use:
@@ -217,10 +255,11 @@ class PipelinePlanner:
                               f"{col_result['reduction_dataset2']}")
 
                         # Derive output licence from retained columns
+                        # Derive output licence from retained columns
+                        # of BOTH datasets (bidirectional shrinking).
                         output_licence = \
-                            self.derive_output_licence_from_columns(
-                                d1, d2, safe_d2
-                            )
+                            self.derive_output_licence_from_columns( d1, d2, safe_d1, safe_d2 )
+                            
                         print(f"\nPIPELINE STATUS: COMPLETE ✓")
                         print(f"Column-level compliance achieved")
                         print(f"Output dataset licence: "
@@ -244,9 +283,13 @@ class PipelinePlanner:
                                 "explanation":       pre_check["explanation"],
                                 "strategy":          "column_level_primary",
                                 "columns_preserved":
-                                    safe_d2,
-                                "columns_excluded":
-                                    col_result["excluded_columns_dataset2"]
+                                safe_d2,
+                                "columns_excluded_d1":
+                                col_result["excluded_columns_dataset1"],
+                                "columns_excluded_d2":
+                                col_result["excluded_columns_dataset2"],
+                                "direction_chosen":
+                                col_result["direction_chosen"]
                             }
                         }
                 
@@ -333,10 +376,9 @@ class PipelinePlanner:
 
     def replan(self, d1, d2, violation, scenario_id):
         """
-        Try to find an alternative for the violated dataset. 
-        YAWL Pattern: XOR-split (choose one alternative) 
-        With re-planning: constraint accumulation
-        Returns structured info about the alternative found.
+        Try to find an alternative for the violated dataset.  
+        YAWL Pattern: XOR-split (choose one alternative)
+        With re-planning: constraint accumulation returns structured info about the alternative found.
         """
         # Get accumulated constraints for this scenario
         accumulated_constraints = get_constraints(scenario_id)
@@ -371,7 +413,7 @@ class PipelinePlanner:
 
         return {
             "status": "failed",
-            "reason": "No compliant alternative found for {d2}",
+            "reason": f"No compliant alternative found for {d2}",
             "constraints_tried": get_constraints(scenario_id)
         }
 

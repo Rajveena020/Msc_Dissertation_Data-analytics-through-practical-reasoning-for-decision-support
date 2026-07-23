@@ -6,9 +6,6 @@
 # Extends the column-level compliance checker to JSON documents with nested field structures. Different fields (potentially nested at
 # arbitrary depth) may carry different licence terms.
 #
-# This addresses Julian's Meeting 2 follow-up question:
-# "What sorts of issues arise with other kinds of (non-tabular) data?"
-#
 # The system reframes non-tabular compliance for JSON as field-level compliance where paths use dot notation
 # (e.g. 'clinical.diagnosis_code'). This preserves the column-level architecture while extending it to hierarchical data structures.
 # ============================================================
@@ -42,7 +39,7 @@ FIELD_REGISTRY = {
         "patient.age_group":      "ogl",
         "patient.sex":            "ogl",
 
-        # Clinical data — restricted (CC-BY-NC)
+        # Clinical data - restricted (CC-BY-NC)
         "clinical.diagnosis_code": "cc_by_nc",
         "clinical.length_of_stay": "cc_by_nc",
         "clinical.medication":     "cc_by_nc",
@@ -163,56 +160,115 @@ class JSONFieldChecker:
     def find_compliant_fields(self, dataset1, dataset2):
         """
         Identify the maximum subset of field paths from each dataset that can be safely combined without violating any licence.
-
-        This is the JSON analogue of column-level re-planning: rather than excluding entire datasets, we identify
-        which specific field paths must be excluded - respecting the nested structure of the JSON documents.
+        Bidirectional: tries shrinking dataset2 first, then dataset1 if that fails, and returns the direction preserving more fields.
         """
         fields1 = self.get_all_fields(dataset1)
         fields2 = self.get_all_fields(dataset2)
 
-        # Try excluding fields from dataset2 iteratively
-        safe_fields2 = list(fields2)
-        excluded_fields2 = []
+        # Direction A: shrink dataset2, keep dataset1 whole.
+        safe_A_d1, safe_A_d2, excluded_A_d2 = self._shrink_fields(
+            dataset1, fields1, dataset2, fields2, shrink_which=2
+        )
 
-        while True:
-            result = self.check_fields(
-                dataset1, fields1, dataset2, safe_fields2
-            )
-            if result["compliant"]:
-                break
+        # Direction B: shrink dataset1, keep dataset2 whole.
+        safe_B_d1, safe_B_d2, excluded_B_d1 = self._shrink_fields(
+            dataset1, fields1, dataset2, fields2, shrink_which=1
+        )
 
-            # Find fields from dataset2 that appear in violations
-            violating_in_2 = set()
-            for v in result["violations"]:
-                # Extract field name from "dataset.field.path"
-                field_full = v["field2"]
-                field_name = field_full.split('.', 1)[1]
-                violating_in_2.add(field_name)
+        total_A = len(safe_A_d1) + len(safe_A_d2)
+        total_B = len(safe_B_d1) + len(safe_B_d2)
 
-            if not violating_in_2:
-                break
+        if total_A == 0 and total_B == 0:
+            return {
+                "safe_fields_dataset1": [],
+                "safe_fields_dataset2": [],
+                "excluded_fields_dataset1": fields1,
+                "excluded_fields_dataset2": fields2,
+                "reduction_dataset1": f"0/{len(fields1)} fields preserved",
+                "reduction_dataset2": f"0/{len(fields2)} fields preserved",
+                "direction_chosen": "none",
+            }
 
-            # Remove one violating field and retry
-            field_to_remove = list(violating_in_2)[0]
-            safe_fields2.remove(field_to_remove)
-            excluded_fields2.append(field_to_remove)
+        if total_A >= total_B:
+            return {
+                "safe_fields_dataset1": safe_A_d1,
+                "safe_fields_dataset2": safe_A_d2,
+                "excluded_fields_dataset1": [],
+                "excluded_fields_dataset2": excluded_A_d2,
+                "reduction_dataset1": (
+                    f"{len(safe_A_d1)}/{len(fields1)} fields preserved"
+                ),
+                "reduction_dataset2": (
+                    f"{len(safe_A_d2)}/{len(fields2)} fields preserved"
+                ),
+                "direction_chosen": "shrink_dataset2",
+            }
+        else:
+            return {
+                "safe_fields_dataset1": safe_B_d1,
+                "safe_fields_dataset2": safe_B_d2,
+                "excluded_fields_dataset1": excluded_B_d1,
+                "excluded_fields_dataset2": [],
+                "reduction_dataset1": (
+                    f"{len(safe_B_d1)}/{len(fields1)} fields preserved"
+                ),
+                "reduction_dataset2": (
+                    f"{len(safe_B_d2)}/{len(fields2)} fields preserved"
+                ),
+                "direction_chosen": "shrink_dataset1",
+            }
 
-            if not safe_fields2:
-                break
+    def _shrink_fields(self, dataset1, fields1, dataset2, fields2, shrink_which):
+        """
+        Internal: iteratively shrink one dataset's field set until the combination is compliant, or until the shrinking set is empty.
+        """
+        if shrink_which == 2:
+            fixed_fields = list(fields1)
+            variable_fields = list(fields2)
+            excluded = []
+            while True:
+                result = self.check_fields(
+                    dataset1, fixed_fields, dataset2, variable_fields
+                )
+                if result["compliant"]:
+                    return fixed_fields, variable_fields, excluded
+                violating = set()
+                for v in result["violations"]:
+                    field_full = v["field2"]
+                    field_name = field_full.split('.', 1)[1]
+                    violating.add(field_name)
+                if not violating:
+                    return fixed_fields, variable_fields, excluded
+                field_to_remove = list(violating)[0]
+                variable_fields.remove(field_to_remove)
+                excluded.append(field_to_remove)
+                if not variable_fields:
+                    return fixed_fields, [], excluded
 
-        return {
-            "safe_fields_dataset1":     fields1,
-            "safe_fields_dataset2":     safe_fields2,
-            "excluded_fields_dataset1": [],
-            "excluded_fields_dataset2": excluded_fields2,
-            "reduction_dataset1": (
-                f"{len(fields1)}/{len(fields1)} fields preserved"
-            ),
-            "reduction_dataset2": (
-                f"{len(safe_fields2)}/{len(fields2)} fields preserved"
-            ),
-        }
+        elif shrink_which == 1:
+            fixed_fields = list(fields2)
+            variable_fields = list(fields1)
+            excluded = []
+            while True:
+                result = self.check_fields(
+                    dataset1, variable_fields, dataset2, fixed_fields
+                )
+                if result["compliant"]:
+                    return variable_fields, fixed_fields, excluded
+                violating = set()
+                for v in result["violations"]:
+                    field_full = v["field1"]
+                    field_name = field_full.split('.', 1)[1]
+                    violating.add(field_name)
+                if not violating:
+                    return variable_fields, fixed_fields, excluded
+                field_to_remove = list(violating)[0]
+                variable_fields.remove(field_to_remove)
+                excluded.append(field_to_remove)
+                if not variable_fields:
+                    return [], fixed_fields, excluded
 
+        raise ValueError(f"shrink_which must be 1 or 2, got {shrink_which}")
 
 # Demo Scenarios
 if __name__ == "__main__":

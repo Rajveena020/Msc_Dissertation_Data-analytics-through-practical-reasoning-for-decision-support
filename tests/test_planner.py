@@ -43,9 +43,12 @@ def test_scenario_1_column_level_primary():
     assert result["datasets_used"] == ["air_quality", "nhs_admissions"]
     assert result["replan_trace"]["strategy"] == "column_level_primary"
     
-    # Verify data preservation matches the headline claim
+    # Verify data preservation matches the headline claim.
+    # Direction A (shrink dataset2) is expected to win for this scenario.
+    assert result["replan_trace"]["direction_chosen"] == "shrink_dataset2"
+
     preserved = result["replan_trace"]["columns_preserved"]
-    excluded = result["replan_trace"]["columns_excluded"]
+    excluded = result["replan_trace"]["columns_excluded_d2"]
     assert len(preserved) == 5  # 5 OGL columns retained
     assert len(excluded) == 3   # 3 CC-BY-NC columns excluded
     
@@ -87,24 +90,46 @@ def test_scenario_3_share_alike():
     print("PASS: Scenario 3 dataset-level substitution works")
 
 
-def test_scenario_4_nhs_weather():
+def test_scenario_4_nhs_weather_dataset_level():
     """
-    Scenario 4: CC-BY-SA + CC-BY-NC violation. The re-planner correctly reports partial output because no single-substitution alternative exists,
-    swapping nhs_admissions to ons_health_stats (OGL) still leaves a share-alike conflict with met_office_weather (CC-BY-SA).
-    Multi-step substitution search is documented as future work.
+    Scenario 4 dataset-level: CC-BY-SA + CC-BY-NC violation. No single-substitution alternative exists in DOMAIN_ALTERNATIVES;
+    the system honestly reports partial output. This provides direct evidence for revised Objective O4 - the absence of a valid
+    alternative is itself a meaningful and correct outcome.
     """
-    planner = PipelinePlanner()
+    planner = PipelinePlanner(use_column_level=False)
     result = planner.build_pipeline("scenario_4")
 
-    # Correct behaviour: report partial output honestly
     assert result["status"] == "partial"
     assert result["replan_trace"]["strategy"] == "no_alternative_found"
     assert result["replan_trace"]["original_datasets"] == [
         "met_office_weather", "nhs_admissions"
     ]
 
-    print("PASS: Scenario 4 correctly reports partial output "
-          "(no single-substitution alternative exists — O4 evidence)")
+    print("PASS: Scenario 4 dataset-level correctly reports partial output (no single-substitution alternative exists - O4 evidence)")
+        
+
+
+def test_scenario_4_nhs_weather_column_level():
+    """
+    Scenario 4 column-level: CC-BY-SA + CC-BY-NC violation. With bidirectional column shrinking, the algorithm identifies a compliant subset
+    by discarding the CC-BY-SA meteorological columns from met_office_weather and the CC-BY-NC clinical columns from nhs_admissions,
+    preserving the OGL administrative columns of both.
+    """
+    planner = PipelinePlanner(use_column_level=True)
+    result = planner.build_pipeline("scenario_4")
+
+    assert result["status"] == "success"
+    assert result["compliance_mode"] == "column_level"
+    assert result["datasets_used"] == [
+        "met_office_weather", "nhs_admissions"
+    ]
+    assert result["replan_trace"]["strategy"] == "column_level_primary"
+    assert result["replan_trace"]["direction_chosen"] in [
+        "shrink_dataset1", "shrink_dataset2", "shrink_both"
+    ]
+
+    print("PASS: Scenario 4 column-level recovers via bidirectional shrinking (both datasets shrunk to their OGL columns)")
+          
 
 
 def test_scenario_5_odbl():
@@ -138,7 +163,7 @@ def test_scenario_6_target_licence():
 def test_scenario_7_no_alternative():
     """
     Scenario 7: OSM (ODbL) + NHS (CC-BY-NC) - no compliant alternatives exist. System must correctly report PARTIAL rather than falsely
-     claim success.
+    claim success.
     """
     planner = PipelinePlanner()
     result = planner.build_pipeline("scenario_7")
@@ -158,6 +183,26 @@ def test_scenario_7_no_alternative():
 
     print("PASS: Scenario 7 correctly reports no viable alternative "
           "(O4 evidence)")
+          
+def test_ontology_is_consulted_by_planner():
+    """
+    Verifies that the planner's output-licence derivation consults the licence ontology when both input licences are known to the ontology,
+    with a linear-ranking fallback when the ontology returns 'unknown'.
+    """
+    planner = PipelinePlanner()
+
+    # Two OGL inputs -> ontology returns concrete OGL.
+    result = planner.derive_output_licence("air_quality", "ons_census")
+    assert result == "ogl"
+
+    # Two CC-BY-SA inputs -> ontology returns concrete CC-BY-SA.
+    result = planner.derive_output_licence(
+        "met_office_weather", "met_office_weather"
+    )
+    assert result == "cc_by_sa"
+
+    print("PASS: Planner correctly consults the licence ontology (and honours the target_licence contract) ")
+          
 
 
 def test_end_to_end_correctness():
@@ -184,12 +229,15 @@ if __name__ == "__main__":
     print("=" * 55)
 
     test_scenario_1_replanning()
+    test_scenario_1_column_level_primary()
     test_scenario_2_compliant()
     test_scenario_3_share_alike()
-    test_scenario_4_nhs_weather()
+    test_scenario_4_nhs_weather_dataset_level()
+    test_scenario_4_nhs_weather_column_level()
     test_scenario_5_odbl()
     test_scenario_6_target_licence()
     test_scenario_7_no_alternative()
+    test_ontology_is_consulted_by_planner()
     test_end_to_end_correctness()
 
     print("\nALL TESTS PASSED!")

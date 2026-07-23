@@ -14,7 +14,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.checker import PolicyChecker
-from src.registries import COLUMN_REGISTRY
+from src.registries import COLUMN_REGISTRY, LICENCE_RANK
 
 class ColumnLevelChecker:
     """
@@ -88,47 +88,127 @@ class ColumnLevelChecker:
     def find_compliant_columns(self, dataset1, dataset2):
         """
         Given two datasets, identify the maximum subset of columns from each that can be safely combined without violating any licence.
-        Strategy: iteratively exclude columns from the more restrictive dataset until all remaining pairs are compliant.
+
+        Strategy: iteratively remove the column that appears in the most violations, from whichever dataset it belongs to. This handles
+        scenarios where both datasets carry restrictive columns that conflict with each other - a case that a single-direction
+        shrinking algorithm cannot recover.
         """
         cols1 = self.get_all_columns(dataset1)
         cols2 = self.get_all_columns(dataset2)
+        
 
-        # Try excluding columns from dataset2 first
-        # (typically the more restrictive one)
+        safe_cols1 = list(cols1)
         safe_cols2 = list(cols2)
+        excluded_cols1 = []
         excluded_cols2 = []
 
         while True:
-            result = self.check_columns(dataset1, cols1, dataset2, safe_cols2)
+            result = self.check_columns(
+                dataset1, safe_cols1, dataset2, safe_cols2
+            )
+           
             if result["compliant"]:
-                break
-            # Find columns from dataset2 that appear in violations
-            violating_in_2 = set()
+                # If either safe list is empty, treat as no viable subset.
+                if not safe_cols1 or not safe_cols2:
+                    return {
+                        "safe_columns_dataset1": [],
+                        "safe_columns_dataset2": [],
+                        "excluded_columns_dataset1": cols1,
+                        "excluded_columns_dataset2": cols2,
+                        "reduction_dataset1": (
+                            f"0/{len(cols1)} columns preserved"
+                        ),
+                        "reduction_dataset2": (
+                            f"0/{len(cols2)} columns preserved"
+                        ),
+                        "direction_chosen": "none",
+                    }
+                # Otherwise, report the successful shrink.
+                direction = self._describe_direction(
+                    excluded_cols1, excluded_cols2
+                )
+                return {
+                    "safe_columns_dataset1": safe_cols1,
+                    "safe_columns_dataset2": safe_cols2,
+                    "excluded_columns_dataset1": excluded_cols1,
+                    "excluded_columns_dataset2": excluded_cols2,
+                    "reduction_dataset1": (
+                        f"{len(safe_cols1)}/{len(cols1)} columns preserved"
+                    ),
+                    "reduction_dataset2": (
+                        f"{len(safe_cols2)}/{len(cols2)} columns preserved"
+                    ),
+                    "direction_chosen": direction,
+                }
+
+            # Count how often each column appears in violations.
+            # Score each column that appears in a violation by:
+            #   (a) restrictiveness of its licence (higher rank = removed first)
+            #   (b) number of violations it appears in
+            # Then remove the single worst-scoring column across both datasets.
+            candidates = []
+
             for v in result["violations"]:
-                col = v["column2"].split(".")[1]
-                violating_in_2.add(col)
-            if not violating_in_2:
-                break
-            # Remove one violating column and retry
-            col_to_remove = list(violating_in_2)[0]
-            safe_cols2.remove(col_to_remove)
-            excluded_cols2.append(col_to_remove)
-            if not safe_cols2:
+                c1 = v["column1"].split(".")[1]
+                c2 = v["column2"].split(".")[1]
+                l1 = v["licence1"]
+                l2 = v["licence2"]
+                candidates.append((1, c1, l1))
+                candidates.append((2, c2, l2))
+
+            # Aggregate: count occurrences per (dataset, column, licence).
+            score = {}
+            for (ds, col, lic) in candidates:
+                key = (ds, col, lic)
+                score[key] = score.get(key, 0) + 1
+
+            # Rank by (licence_rank, violation_count) descending. The  more restrictive the licence, the earlier the column goes;
+            # ties broken by count.
+            def sort_key(item):
+                (ds, col, lic), count = item
+                rank = LICENCE_RANK.get(lic, 0)
+                return (rank, count)
+
+            best = max(score.items(), key=sort_key, default=None)
+            if best is None:
                 break
 
-        return {
-            "safe_columns_dataset1": cols1,
-            "safe_columns_dataset2": safe_cols2,
-            "excluded_columns_dataset1": [],
-            "excluded_columns_dataset2": excluded_cols2,
-            "reduction_dataset1": (
-                f"{len(cols1)}/{len(cols1)} columns preserved"
-            ),
-            "reduction_dataset2": (
-                f"{len(safe_cols2)}/{len(cols2)} columns preserved"
-            ),
-        }
+            (ds, col, lic), _ = best
+            if ds == 1:
+                safe_cols1.remove(col)
+                excluded_cols1.append(col)
+            else:
+                safe_cols2.remove(col)
+                excluded_cols2.append(col)
 
+            # If either safe list becomes empty, stop.
+            if not safe_cols1 or not safe_cols2:
+                return {
+                    "safe_columns_dataset1": [],
+                    "safe_columns_dataset2": [],
+                    "excluded_columns_dataset1": cols1,
+                    "excluded_columns_dataset2": cols2,
+                    "reduction_dataset1": (
+                        f"0/{len(cols1)} columns preserved"
+                    ),
+                    "reduction_dataset2": (
+                        f"0/{len(cols2)} columns preserved"
+                    ),
+                    "direction_chosen": "none",
+                }
+
+    def _describe_direction(self, excluded_d1, excluded_d2):
+        """
+        Report which direction(s) the algorithm shrunk.
+        """
+        if excluded_d1 and excluded_d2:
+            return "shrink_both"
+        elif excluded_d2:
+            return "shrink_dataset2"
+        elif excluded_d1:
+            return "shrink_dataset1"
+        else:
+            return "no_shrink_needed"
 
 # Demo Scenarios 
 if __name__ == "__main__":
@@ -172,8 +252,7 @@ if __name__ == "__main__":
     print("\n" + "-" * 70)
     print("DEMO 2: Maximum-Compliant Column Subset")
     print("-" * 70)
-    print("Instead of excluding nhs_admissions entirely,")
-    print("identify which columns CAN safely be combined:")
+    print("Instead of excluding nhs_admissions entirely, identify which columns CAN safely be combined: ")
 
     subset = ccc.find_compliant_columns("air_quality", "nhs_admissions")
 

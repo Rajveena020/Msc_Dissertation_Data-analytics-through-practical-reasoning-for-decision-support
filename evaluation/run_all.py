@@ -107,14 +107,18 @@ def verify_baseline_pipeline(scenario_id, baseline_result):
 
 def calculate_preservation(col_result):
     """
-    Calculate how many columns were preserved in column-level compliance mode.
+    Report column preservation for column-level compliance. The bidirectional algorithm may shrink either dataset, so both  dataset1 and dataset2
+    preservation are reported.
     """
     if col_result.get("compliance_mode") == "column_level":
         subset = col_result.get("column_subset", {})
-        safe = len(subset.get("safe_columns_dataset2", []))
-        excluded = len(subset.get("excluded_columns_dataset2", []))
-        total = safe + excluded
-        return f"{safe}/{total}"
+        safe_d1 = len(subset.get("safe_columns_dataset1", []))
+        excl_d1 = len(subset.get("excluded_columns_dataset1", []))
+        safe_d2 = len(subset.get("safe_columns_dataset2", []))
+        excl_d2 = len(subset.get("excluded_columns_dataset2", []))
+        total_d1 = safe_d1 + excl_d1
+        total_d2 = safe_d2 + excl_d2
+        return f"d1:{safe_d1}/{total_d1}, d2:{safe_d2}/{total_d2}"
     return "N/A (re-planned)"
 
 
